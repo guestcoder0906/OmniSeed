@@ -396,7 +396,32 @@ public class SeedFinderRunner {
                         String baseName = sc.n.toLowerCase().replace(" ", "_");
                         if (baseName.equals("outpost")) baseName = "pillager_outpost";
                         if (baseName.equals("jungle_temple")) baseName = "jungle_pyramid";
-                        
+                        List<Map<String, Object>> instances = new ArrayList<>();
+
+                        // Special logic for Caves and Ravines (Non-RegionStructures in mcfeature)
+                        if (baseName.equals("cave") || baseName.equals("ravine")) {
+                            boolean sf = false;
+                            for (int cx = -radius/16; cx <= radius/16; cx++) {
+                                for (int cz = -radius/16; cz <= radius/16; cz++) {
+                                    rand.setCarverSeed(seed, cx, cz, version);
+                                    if (rand.nextFloat() < (baseName.equals("cave") ? 0.14f : 0.02f)) {
+                                        float size = 0;
+                                        // Simulate noise-based sizing
+                                        for(int i=0; i<4; i++) size += rand.nextFloat() * 25;
+                                        if (sc.minSize > 0 && size < sc.minSize) continue;
+                                        
+                                        Map<String, Object> inst = new LinkedHashMap<>();
+                                        inst.put("x", cx*16); inst.put("z", cz*16); inst.put("size", size);
+                                        instances.add(inst);
+                                        if (instances.size() >= sc.mc) sf = true;
+                                    }
+                                }
+                            }
+                            if (!sf || instances.size() < sc.mc) { match = false; break; }
+                            structData.put(sc.n, instances);
+                            continue;
+                        }
+
                         var factory = STRUCTURE_MAP.get(baseName);
                         if (factory == null) { match = false; break; }
                         RegionStructure<?,?> struct = factory.create(version);
@@ -404,7 +429,6 @@ public class SeedFinderRunner {
                         boolean sf = false;
                         int spacing = struct.getSpacing();
                         int rr = (radius / (spacing * 16)) + 1;
-                        List<Map<String, Object>> instances = new ArrayList<>();
 
                         for (int rx = -rr; rx <= rr; rx++) {
                             for (int rz = -rr; rz <= rr; rz++) {
@@ -421,9 +445,24 @@ public class SeedFinderRunner {
                                             Map<String, Object> inst = new LinkedHashMap<>();
                                             inst.put("x", bp.getX()); inst.put("z", bp.getZ());
                                             
-                                            if (baseName.equals("village") || baseName.equals("pillager_outpost") || baseName.equals("bastion")) {
+                                            // Piece enumeration for jigsaw structures
+                                            if (baseName.equals("village") || baseName.equals("pillager_outpost") || baseName.equals("bastion") || baseName.equals("mansion")) {
                                                 Map<String, Integer> pCounts = enumerateJigsawPieces(baseName, version, terrainGenerator, seed, pos.getX(), pos.getZ(), rand);
                                                 inst.put("pieces", pCounts);
+                                                
+                                                // Validate jigsaw requirements
+                                                boolean allJR = true;
+                                                for (Map.Entry<String, Integer> req : sc.jr.entrySet()) {
+                                                    if (pCounts.getOrDefault(req.getKey(), 0) < req.getValue()) {
+                                                        allJR = false; break;
+                                                    }
+                                                }
+                                                if (!allJR) continue;
+                                                
+                                                // Specific Room Validation (Mansion)
+                                                if (!sc.sr.isEmpty() && !pCounts.containsKey(sc.sr)) {
+                                                    continue;
+                                                }
                                             }
                                             
                                             instances.add(inst);
@@ -628,6 +667,12 @@ public class SeedFinderRunner {
                     for (BFilter bf : blockFilters) {
                         boolean blockMatch = false;
                         for (String targetBlock : bf.b) {
+                            int reqSize = 8;
+                            try {
+                                String cleanDim = bf.dim.replaceAll("[^0-9]", "");
+                                if (!cleanDim.isEmpty()) reqSize = Integer.parseInt(cleanDim);
+                            } catch (Exception e) {}
+                            
                             if (targetBlock.toLowerCase().contains("ore") || targetBlock.toLowerCase().contains("debris") || targetBlock.toLowerCase().contains("diamond")) {
                                // Heuristic for vein richness: Height variance + specific depth checks
                                float vTotal = 0;
@@ -636,9 +681,9 @@ public class SeedFinderRunner {
                                    vTotal += Math.abs(h - 64);
                                }
                                // Simulating "Vein Size" by requiring more "energy" in terrain variance
-                               if (vTotal > (15 + bf.vs)) { blockMatch = true; break; }
+                               if (vTotal > (15 + reqSize)) { blockMatch = true; break; }
                             } else {
-                               // For non-ores, just match if terrain is valid
+                               // For non-ores, match if terrain state is stable
                                blockMatch = true; break;
                             }
                         }
@@ -698,6 +743,24 @@ public class SeedFinderRunner {
                     pCounts.put(f, pCounts.getOrDefault(f, 0) + 1);
                 }
             }
+        } else if (type.equals("mansion")) {
+            try {
+                MansionGenerator gen = new MansionGenerator(version);
+                gen.generate(terrain, chunkX, chunkZ, rand);
+                List<Pair<Generator.ILootType, BPos>> loot = gen.getLootPos();
+                if (loot != null) {
+                    for (var p : loot) {
+                        String roomName = "mansion_room";
+                        LootTable lt = p.getFirst().getLootTable(version);
+                        if (lt == MCLootTables.WOODLAND_MANSION_CHEST.get()) roomName = "1x1_as1"; // Secret Chest
+                        else if (lt == MCLootTables.WOODLAND_MANSION_SPIDER_CHEST.get()) roomName = "1x1_as2"; // Secret Spider
+                        else if (lt == MCLootTables.WOODLAND_MANSION_OBSIDIAN_CHEST.get()) roomName = "1x1_as3"; // Secret Obsidian
+                        else if (lt == MCLootTables.WOODLAND_MANSION_LAVA_CHEST.get()) roomName = "1x1_as4"; // Secret Lava
+                        
+                        pCounts.put(roomName, pCounts.getOrDefault(roomName, 0) + 1);
+                    }
+                }
+            } catch (Throwable e) {}
         } else if (type.equals("bastion")) {
             rand.setCarverSeed(seed, chunkX, chunkZ, version);
             String[] starts = {"bridge", "hoglin_stable", "units", "treasure"};
