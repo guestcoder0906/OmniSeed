@@ -1062,18 +1062,14 @@ public class SeedFinderRunner {
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
             }
-        } else if (type.equals("pillager_outpost")) {
-            // Pillager Outpost watches its own watching (deterministic Jigsaw)
-            pCounts.put("watchtower", 1);
-            rand.setDecoratorSeed(seed, chunkX << 4, chunkZ << 4, 30002, version);
-            String[] features = {"tent1", "tent2", "logs", "target", "cage", "empty", "empty"};
-            for(int i = 0; i < 5; i++) {
-                int r = rand.nextInt(features.length);
-                String f = features[r];
-                if (!f.equals("empty")) {
-                    pCounts.put(f, pCounts.getOrDefault(f, 0) + 1);
+        } else if (type.equals("shipwreck")) {
+            try {
+                ShipwreckGenerator gen = new ShipwreckGenerator(version);
+                if (gen.generate(terrain, chunkX, chunkZ, rand)) {
+                    String st = gen.getType();
+                    if (st != null) pCounts.put(st, 1);
                 }
-            }
+            } catch (Throwable e) {}
         }
         return pCounts;
     }
