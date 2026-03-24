@@ -959,7 +959,7 @@ public class SeedFinderRunner {
                                    // Record the approximate center of the match
                                    Map<String, Object> m = new LinkedHashMap<>();
                                    m.put("rule", bf.dim + " " + targetBlock);
-                                   m.put("x", 32); m.put("z", 32); 
+                                   m.put("x", 0); m.put("z", 0); 
                                    @SuppressWarnings("unchecked")
                                    List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
                                    bMatches.add(m);
@@ -1015,6 +1015,7 @@ public class SeedFinderRunner {
                         }
                     }
                 }
+                if (loot != null) pCounts.put("total", loot.size());
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
             }
@@ -1070,22 +1071,34 @@ public class SeedFinderRunner {
         if (isSameLoot(lt, MCLootTables.VILLAGE_TOOLSMITH_CHEST, version)) return "toolsmith";
         if (isSameLoot(lt, MCLootTables.VILLAGE_FLETCHER_CHEST, version)) return "fletcher";
         if (isSameLoot(lt, MCLootTables.VILLAGE_MASON_CHEST, version)) return "mason";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_FISHER_CHEST, version)) return "fisher";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_CARTOGRAPHER_CHEST, version)) return "cartographer";
         
         return "unknown";
     }
 
     private static boolean isSameLoot(LootTable a, Supplier<LootTable> bSupp, MCVersion v) {
+        if (a == null || bSupp == null) return false;
         LootTable b = bSupp.get();
         b.apply(v);
-        LootContext ctx = new LootContext(12345L);
-        List<ItemStack> itemsA = a.generate(ctx);
-        List<ItemStack> itemsB = b.generate(ctx);
-        if (itemsA.size() != itemsB.size()) return false;
-        for (int i = 0; i < itemsA.size(); i++) {
-            if (!itemsA.get(i).getItem().getName().equals(itemsB.get(i).getItem().getName())) return false;
-            if (itemsA.get(i).getCount() != itemsB.get(i).getCount()) return false;
+        // Check across multiple seeds to ensure it's not a collision of empty tables
+        long[] seeds = {12345L, 54321L, 99999L};
+        for (long s : seeds) {
+            LootContext ctx = new LootContext(s);
+            List<ItemStack> itemsA = a.generate(ctx);
+            List<ItemStack> itemsB = b.generate(ctx);
+            if (itemsA.size() != itemsB.size()) continue;
+            if (itemsA.isEmpty()) continue; // Try another seed if both are empty
+            
+            boolean match = true;
+            for (int i = 0; i < itemsA.size(); i++) {
+                if (!itemsA.get(i).getItem().getName().equals(itemsB.get(i).getItem().getName())) {
+                    match = false; break;
+                }
+            }
+            if (match) return true;
         }
-        return true;
+        return false;
     }
 
     static String toJson(Object obj) {
