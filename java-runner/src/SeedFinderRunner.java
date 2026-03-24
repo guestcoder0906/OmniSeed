@@ -1048,16 +1048,34 @@ public class SeedFinderRunner {
                 List<Pair<Generator.ILootType, BPos>> loot = gen.getLootPos();
                 if (loot != null) {
                     for (var p : loot) {
-                        LootTable lt = p.getFirst().getLootTable(version);
-                        String t = "unknown";
-                        // Use a more robust check: compare table item generation for fixed seed or check names
-                        // Since we have MCLootTables, let's use a fingerprinting method
-                        t = identifyVillageLoot(p.getFirst(), version);
+                        String t = identifyVillageLoot(p.getFirst(), version);
                         if (!t.equals("unknown")) {
                             pCounts.put(t, pCounts.getOrDefault(t, 0) + 1);
                         }
                     }
                 }
+                
+                // Advanced: Use reflection to extract actual piece identifiers if possible
+                try {
+                   Field piecesField = gen.getClass().getDeclaredField("pieces");
+                   piecesField.setAccessible(true);
+                   List<?> pieces = (List<?>)piecesField.get(gen);
+                   if (pieces != null) {
+                       for (Object p : pieces) {
+                           try {
+                               // Extract piece name: often in a field like 'templateName' or 'id'
+                               Field nameField = p.getClass().getDeclaredField("templateName");
+                               nameField.setAccessible(true);
+                               String name = (String)nameField.get(p);
+                               if (name != null) {
+                                   String clean = name.toLowerCase().replace("village/", "").replace("pillager_outpost/", "");
+                                   pCounts.put(clean, pCounts.getOrDefault(clean, 0) + 1);
+                               }
+                           } catch (Exception e2) {}
+                       }
+                   }
+                } catch (Exception e) {}
+                
                 if (loot != null) pCounts.put("total", loot.size());
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
