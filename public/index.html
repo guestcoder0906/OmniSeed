@@ -90,7 +90,6 @@ input:focus,select:focus{border-color:var(--a)}
 <div class="logo"><div class="li">OS</div><div><h1>OmniSeed</h1><span>Advanced Minecraft Seed Finder <strong style="color:var(--ok);font-size:1.2rem">v13.4 (FINAL STABLE SYNC)</strong> - Sync: 08:00 UTC</span></div></div>
 <div class="tabs" id="mt">
 <button class="tab act" data-tab="finder">🔍 Seed Finder</button>
-<button class="tab" data-tab="loot" style="display:none">🎁 Loot Explorer</button>
 </div></div></header>
 
 <main class="mn">
@@ -572,7 +571,7 @@ function rRes() {
         }).join('')).join('') : '';
         
         const b = r.biomes ? Object.entries(r.biomes).map(([n, p]) => `<span class="rtg" style="background:rgba(245,158,11,0.15);color:var(--wn)">${n} (${p.x}, ${p.z})${p.type ? ` : ${p.type}` : ''}</span>`).join('') : '';
-        const bMatches = r.bMatches ? `<div style="margin-top:8px;padding:8px;background:rgba(14,165,233,0.1);border-radius:4px;border:1px solid rgba(14,165,233,0.2)"><div style="font-weight:600;font-size:0.7rem;color:#0ea5e9;margin-bottom:4px">🧱 Custom Block Matches:</div><div style="font-size:0.7rem;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px">${r.bMatches.map(m => `<span style="background:rgba(14,165,233,0.15);padding:2px 4px;border-radius:2px">${m}</span>`).join('')}</div></div>` : '';
+        const bMatches = r.bMatches ? `<div style="margin-top:8px;padding:8px;background:rgba(14,165,233,0.1);border-radius:4px;border:1px solid rgba(14,165,233,0.2)"><div style="font-weight:600;font-size:0.7rem;color:#0ea5e9;margin-bottom:4px">🧱 Custom Block Matches:</div><div style="font-size:0.7rem;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px">${r.bMatches.map(m => `<span style="background:rgba(14,165,233,0.15);padding:2px 4px;border-radius:2px">${typeof m === 'object' ? `${m.rule} @ (${m.x}, ${m.z})` : m}</span>`).join('')}</div></div>` : '';
         const lootInfo = r.foundLoot ? `<div style="margin-top:8px;padding:8px;background:rgba(139,92,246,0.1);border-radius:4px;border:1px solid rgba(139,92,246,0.2)"><div style="font-weight:600;font-size:0.7rem;color:var(--a2);margin-bottom:4px">🎁 Validated Loot:</div><div style="font-size:0.7rem;color:var(--t2)">${r.foundLoot.map(l => `<b>${l.table}</b> at (${l.x}, ${l.z})`).join('<br>')}</div></div>` : '';
         const lootBtn = '';
         

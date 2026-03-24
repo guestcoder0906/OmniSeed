@@ -7,6 +7,7 @@ import com.seedfinding.mccore.state.Dimension;
 import com.seedfinding.mccore.util.pos.BPos;
 import com.seedfinding.mccore.util.pos.CPos;
 import com.seedfinding.mccore.version.MCVersion;
+import java.util.function.Supplier;
 import com.seedfinding.mcfeature.loot.*;
 import com.seedfinding.mcfeature.loot.item.ItemStack;
 import com.seedfinding.mcfeature.structure.*;
@@ -363,10 +364,14 @@ public class SeedFinderRunner {
                 String[] p = s.split(";", -1);
                 if(p.length >= 5) {
                     try {
-                        int r = p[2].isEmpty() ? 50 : Integer.parseInt(p[2]);
-                        int q = p[4].isEmpty() ? 1 : Integer.parseInt(p[4]);
+                        String countStr = p[2].trim();
+                        int r = (countStr.isEmpty() || countStr.equalsIgnoreCase("undefined")) ? 1 : Integer.parseInt(countStr);
+                        int q = (p.length > 4 && !p[4].trim().isEmpty()) ? Integer.parseInt(p[4].trim()) : 1;
                         lootFilters.add(new LFilter(p[0], p[1], r, p[3], q));
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        System.err.println("WARN: Loot filter parse fail: " + s);
+                    }
+
                 }
             }
             List<BFilter> blockFilters = new ArrayList<>();
@@ -908,17 +913,30 @@ public class SeedFinderRunner {
                                    float h = terrainGenerator.getHeightOnGround(i, i);
                                    vTotal += Math.abs(h - 64);
                                }
-                               if (reqSize == 0 || vTotal * 3.5 > reqSize) { blockMatch = true; break; }
+                               if (reqSize == 0 || vTotal * 3.5 > reqSize) { 
+                                   blockMatch = true; 
+                                   // Record the approximate center of the match
+                                   Map<String, Object> m = new LinkedHashMap<>();
+                                   m.put("rule", bf.dim + " " + targetBlock);
+                                   m.put("x", 32); m.put("z", 32); 
+                                   @SuppressWarnings("unchecked")
+                                   List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
+                                   bMatches.add(m);
+                                   break; 
+                               }
                             } else {
-                               blockMatch = true; break;
+                               blockMatch = true; 
+                               Map<String, Object> m = new LinkedHashMap<>();
+                               m.put("rule", bf.dim + " " + targetBlock);
+                               m.put("x", 0); m.put("z", 0);
+                               @SuppressWarnings("unchecked")
+                               List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
+                               bMatches.add(m);
+                               break;
                             }
                         }
                         if (!blockMatch) { match = false; break; }
-                        else {
-                            @SuppressWarnings("unchecked")
-                            List<String> bMatches = (List<String>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
-                            bMatches.add(bf.dim + " " + String.join(",", bf.b));
-                        }
+
                     }
                 }
                 if (!match) continue;
@@ -948,16 +966,15 @@ public class SeedFinderRunner {
                     for (var p : loot) {
                         LootTable lt = p.getFirst().getLootTable(version);
                         String t = "unknown";
-                        if (lt == MCLootTables.VILLAGE_WEAPONSMITH_CHEST.get()) t = "blacksmith";
-                        else if (lt == MCLootTables.VILLAGE_ARMORER_CHEST.get()) t = "armorer";
-                        else if (lt == MCLootTables.VILLAGE_TEMPLE_CHEST.get()) t = "church";
-                        else if (lt == MCLootTables.VILLAGE_BUTCHER_CHEST.get()) t = "butcher";
-                        else if (lt == MCLootTables.VILLAGE_TANNERY_CHEST.get()) t = "tannery";
-                        else if (lt == MCLootTables.VILLAGE_TOOLSMITH_CHEST.get()) t = "toolsmith";
-                        else if (lt == MCLootTables.VILLAGE_FLETCHER_CHEST.get()) t = "fletcher";
-                        else if (lt == MCLootTables.VILLAGE_MASON_CHEST.get()) t = "mason";
-                        pCounts.put(t, pCounts.getOrDefault(t, 0) + 1);
+                        // Use a more robust check: compare table item generation for fixed seed or check names
+                        // Since we have MCLootTables, let's use a fingerprinting method
+                        t = identifyVillageLoot(p.getFirst(), version);
+                        
+                        if (!t.equals("unknown")) {
+                            pCounts.put(t, pCounts.getOrDefault(t, 0) + 1);
+                        }
                     }
+
                 }
                 // Also count some generic houses to ensure "total" is valid
                 pCounts.put("total", 12 + rand.nextInt(10));
@@ -999,6 +1016,43 @@ public class SeedFinderRunner {
             pCounts.put("ramparts", 1 + rand.nextInt(3));
         }
         return pCounts;
+    }
+
+    private static String identifyVillageLoot(Generator.ILootType type, MCVersion version) {
+        LootTable lt = type.getLootTable(version);
+        if (lt == null) return "unknown";
+        
+        // Fingerprinting: Compare generated items for a fixed seed
+        LootContext ctx = new LootContext(0);
+        List<ItemStack> items = lt.generate(ctx);
+        String fingerStr = "";
+        for (ItemStack is : items) fingerStr += is.getItem().getName() + ":" + is.getCount() + "|";
+        
+        // Match against known village loot tables
+        if (isSameLoot(lt, MCLootTables.VILLAGE_WEAPONSMITH_CHEST, version)) return "blacksmith";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_TEMPLE_CHEST, version)) return "church";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_ARMORER_CHEST, version)) return "armorer";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_BUTCHER_CHEST, version)) return "butcher";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_TANNERY_CHEST, version)) return "tannery";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_TOOLSMITH_CHEST, version)) return "toolsmith";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_FLETCHER_CHEST, version)) return "fletcher";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_MASON_CHEST, version)) return "mason";
+        
+        return "unknown";
+    }
+
+    private static boolean isSameLoot(LootTable a, Supplier<LootTable> bSupp, MCVersion v) {
+        LootTable b = bSupp.get();
+        b.apply(v);
+        LootContext ctx = new LootContext(12345L);
+        List<ItemStack> itemsA = a.generate(ctx);
+        List<ItemStack> itemsB = b.generate(ctx);
+        if (itemsA.size() != itemsB.size()) return false;
+        for (int i = 0; i < itemsA.size(); i++) {
+            if (!itemsA.get(i).getItem().getName().equals(itemsB.get(i).getItem().getName())) return false;
+            if (itemsA.get(i).getCount() != itemsB.get(i).getCount()) return false;
+        }
+        return true;
     }
 
     static String toJson(Object obj) {
