@@ -479,6 +479,15 @@ async function doScan() {
         `${div.dataset.cond};${div.dataset.b};${div.dataset.cnt};${div.dataset.vs}`
     ).join('|');
 
+    const strClusters = Array.from(document.querySelectorAll('#clist .li2')).map(li => li.innerText.replace('✕','').trim()).join(',');
+    const invCombos = Array.from(document.querySelectorAll('#ilist .li2')).map(li => li.innerText.replace('✕','').trim()).join('|');
+    const clustBym = Array.from(document.querySelectorAll('#bclist .li2')).map(li => {
+        const strong = li.querySelector('strong')?.innerText || '';
+        const minVal = li.querySelector('input:nth-child(1)')?.value || '-1';
+        const maxVal = li.querySelector('input:nth-child(2)')?.value || '-1';
+        return `${strong};${minVal};${maxVal}`;
+    }).join('|');
+
     const body = {
         version: document.getElementById('ver').value,
         startSeed: +(document.getElementById('sseed').value || 0),
@@ -488,7 +497,10 @@ async function doScan() {
         structures: structs.join('|'),
         biomes: biomes,
         lootFilters: lootFilters,
-        blockFilters: blockFilters
+        blockFilters: blockFilters,
+        strClusters: strClusters,
+        invClusters: invCombos,
+        clustBym: clustBym
     };
 
     try {

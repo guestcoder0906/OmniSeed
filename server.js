@@ -158,6 +158,9 @@ app.post('/api/scan', async (req, res) => {
         `biomes=${biomes || ""}`,
         `lootFilters=${lootFilters || ""}`,
         `blockFilters=${blockFilters || ""}`,
+        `strClusters=${req.body.strClusters || ""}`,
+        `invClusters=${req.body.invClusters || ""}`,
+        `clustBym=${req.body.clustBym || ""}`,
         '' // final newline
     ].join('\n');
     

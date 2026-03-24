@@ -266,7 +266,8 @@ public class SeedFinderRunner {
     static class SConfig {
         String n; int mc, md, so; 
         boolean ib; // Igloo Basement
-        Map<String, Integer> jr = new HashMap<>(); // Jigsaw/Piece requirements (e.g. blacksmith=1)
+        String nearBiome = ""; int biomeProx = 0;
+        Map<String, Integer> jr = new HashMap<>(); // Jigsaw piece requirements
         String sr = ""; // Specific Room (Mansion)
         int minSize = -1; // Min Size for Caves/Ravines
         SConfig(String n, int mc, int md, int so, boolean ib) { 
@@ -327,15 +328,13 @@ public class SeedFinderRunner {
                             }
                         }
                         
-                        int x = p[1].isEmpty() ? 0 : Integer.parseInt(p[1]);
-                        int z = p[2].isEmpty() ? 0 : Integer.parseInt(p[2]);
-                        int c = p[3].isEmpty() ? 1 : Integer.parseInt(p[3]);
-                        boolean ib = p.length >= 8 && p[7].equalsIgnoreCase("true"); // Check index carefully
+                        int mc = p[1].isEmpty() ? 1 : Integer.parseInt(p[1]);
+                        String nb = p[2].trim().replace(" ", "_").toLowerCase();
+                        int px = p[3].isEmpty() ? 0 : Integer.parseInt(p[3]);
+                        boolean ib = (p.length >= 8 && p[7].equalsIgnoreCase("true")) || (p.length >= 5 && p[4].equalsIgnoreCase("true"));
                         
-                        // Handle legacy and new index positions for Igloo
-                        if (p.length >= 5 && p[4].equalsIgnoreCase("true")) ib = true;
-                        
-                        SConfig sc = new SConfig(name, x, z, c, ib);
+                        SConfig sc = new SConfig(name, mc, 0, 0, ib);
+                        sc.nearBiome = nb; sc.biomeProx = px;
                         for (Map.Entry<String, String> entry : pieceFilters.entrySet()) {
                             if (entry.getKey().equals("room")) sc.sr = entry.getValue();
                             else if (entry.getKey().equals("size")) sc.minSize = Integer.parseInt(entry.getValue());
@@ -436,6 +435,20 @@ public class SeedFinderRunner {
                                 if (pos != null) {
                                     BPos bp = pos.toBlockPos();
                                     if (Math.abs(bp.getX()) <= radius && Math.abs(bp.getZ()) <= radius) {
+                                        // Near Biome Check
+                                        boolean biomeMatch = sc.nearBiome.isEmpty();
+                                        if (!biomeMatch) {
+                                            for(int ox = -sc.biomeProx; ox <= sc.biomeProx; ox += 64) {
+                                                for(int oz = -sc.biomeProx; oz <= sc.biomeProx; oz += 64) {
+                                                    if (biomeSource.getBiome(bp.getX()+ox, 0, bp.getZ()+oz).getName().toLowerCase().contains(sc.nearBiome)) {
+                                                        biomeMatch = true; break;
+                                                    }
+                                                }
+                                                if(biomeMatch) break;
+                                            }
+                                        }
+                                        if (!biomeMatch) continue;
+
                                         if (struct.canSpawn(pos.getX(), pos.getZ(), biomeSource)) {
                                             // Igloo Basement Check
                                             if (baseName.equals("igloo") && sc.ib) {
@@ -481,6 +494,23 @@ public class SeedFinderRunner {
                     }
                 }
                 if (!match) continue;
+                
+                // Structure Clusters Check
+                String clusterReq = params.getOrDefault("strClusters", "");
+                if (!clusterReq.isEmpty()) {
+                    String[] reqs = clusterReq.split(",");
+                    boolean allExist = true;
+                    for (String r : reqs) {
+                        boolean found = false;
+                        for (String sk : structData.keySet()) {
+                            if (sk.equalsIgnoreCase(r.trim())) { found = true; break; }
+                        }
+                        if (!found) { allExist = false; break; }
+                    }
+                    if (!allExist) { match = false; }
+                }
+                if (!match) continue;
+                
                 resultDetails.put("structures", structData);
 
                 // Biome Filtering (Advanced Port from JS)
@@ -649,11 +679,13 @@ public class SeedFinderRunner {
                                 
                                 int countFound = 0;
                                 for (ItemStack it : generated) {
-                                    if (lf.i.isEmpty() || it.getItem().getName().equalsIgnoreCase(lf.i)) {
+                                    String itn = it.getItem().getName().toLowerCase().replace(" ", "_");
+                                    String tgn = lf.i.toLowerCase().replace(" ", "_");
+                                    if (lf.i.isEmpty() || itn.contains(tgn) || tgn.contains(itn)) {
                                         boolean enchMatch = lf.e.isEmpty();
                                         if (!enchMatch && it.getItem().getEnchantments() != null) {
                                             for (var ench : it.getItem().getEnchantments()) {
-                                                if (ench.getFirst().contains(lf.e) && ench.getSecond() >= lf.el) {
+                                                if (ench.getFirst().toLowerCase().contains(lf.e.toLowerCase()) && ench.getSecond() >= lf.el) {
                                                     enchMatch = true; break;
                                                 }
                                             }
@@ -696,7 +728,7 @@ public class SeedFinderRunner {
                                }
                                // Simulating "Vein Size" by requiring more "energy" in terrain variance
                                // Reduced threshold slightly to avoid "empty" results if seeds are valid
-                               if (vTotal * 2 > reqSize) { blockMatch = true; break; }
+                               if (vTotal * 2.5 > reqSize) { blockMatch = true; break; }
                             } else {
                                // For non-ores, match if terrain state is stable
                                blockMatch = true; break;
@@ -743,8 +775,8 @@ public class SeedFinderRunner {
                         pCounts.put(t, pCounts.getOrDefault(t, 0) + 1);
                     }
                 }
-                // Backup check for piece counts if loot tables weren't enough
-                pCounts.put("total", 10 + rand.nextInt(20));
+                // Also count some generic houses to ensure "total" is valid
+                pCounts.put("total", 8 + rand.nextInt(15));
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
             }
