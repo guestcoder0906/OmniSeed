@@ -354,16 +354,18 @@ if (s === 'Village') {
     extInputs = `<div><label title="Requires the village to have at least this many built blacksmith shops">Min Blacksmiths</label><input type="number" class="sv_blk"></div>
                  <div><label title="Requires the village to have at least this many built churches">Min Churches</label><input type="number" class="sv_chr"></div>
                  <div><label title="Minimum total buildings in the village">Total Buildings</label><input type="number" class="sv_tot"></div>`;
-} else if (s === 'Outpost') {
-    extInputs = `<div><label title="Requires the outpost to spawn with at least this many specific jigsaw pieces">Piece</label><select class="so_pc"><option value="cage">Cage (Iron Golem)</option><option value="tent1">Tent 1</option><option value="tent2">Tent 2</option><option value="target">Target</option><option value="logs">Logs</option></select></div>
-                 <div><label>Min Pieces</label><input type="number" class="so_min" value="1" min="1"></div>`;
-} else if (s === 'Mansion') {
-    extInputs = `<div><label title="Finds a mansion that spawned this exact room layout identifier">Specific Room</label><select class="sm_rm"><option value="">Any Room</option><option value="1x1_as1">Secret Chest (1x1_as1)</option><option value="1x1_as2">Secret Spider (1x1_as2)</option><option value="1x1_as3">Secret Obsidian (1x1_as3)</option><option value="1x1_as4">Secret Lava (1x1_as4)</option><option value="1x2_se1">Secret Room 1 (1x2_se1)</option><option value="1x2_se2">Secret Room 2 (1x2_se2)</option><option value="1x2_se3">Secret Room 3 (1x2_se3)</option><option value="2x2_s1">Secret 2x2 (2x2_s1)</option><option value="1x2_c_stairs">Hidden Stairs</option></select></div>`;
 } else if (s === 'Monument') {
     extInputs = `<div><label title="Requires at least this many sponge rooms in the monument">Min Sponge Rooms</label><input type="number" class="smo_sp"></div>
                  <div><label title="Requires at least this many gold blocks in the core room">Min Gold Rooms</label><input type="number" class="smo_g"></div>`;
 } else if (s === 'Cave' || s === 'Ravine') {
     extInputs = `<div><label title="Filters for caves/ravines with this minimum block size (simulated noise test)">Min Size</label><input type="number" class="su_sz" value="50"></div>`;
+} else if (s === 'Shipwreck') {
+    extInputs = `<div><label title="Filters for shipwreck variants (rightside/upside full/back/front, with mast)">Variant</label><select class="ss_pc"><option value="" selected>Any Variant</option><option value="with_mast">With Mast</option><option value="rightside_up_full">Rightside Up</option><option value="upside_down_full">Upside Down</option></select></div>`;
+} else if (s === 'Outpost') {
+    extInputs = `<div><label title="Requires specific jigsaw pieces (deterministic search)">Piece</label><select class="so_pc"><option value="" selected>Any Piece</option><option value="cage">Cage</option><option value="tent1">Tent 1</option><option value="tent2">Tent 2</option><option value="logs">Logs</option><option value="target">Target</option></select></div>
+                 <div><label>Min Pieces</label><input type="number" class="so_min" value="1" min="1"></div>`;
+} else if (s === 'Mansion') {
+    extInputs = `<div><label title="Filters for specific layout identifiers (v1.14+)">Mansion Room</label><select class="sm_rm"><option value="" selected>Any Room</option><option value="1x1_as1">Secret Chest</option><option value="1x1_as2">Spider Room</option><option value="1x1_as3">Obsidian Room</option><option value="1x1_as4">Lava Room</option></select></div>`;
 } else if (s === 'Igloo') {
     const hasBasement = document.getElementById('ig_basement').checked;
     extInputs = `<div><label>Basement Only</label><input type="checkbox" class="si_bas" ${hasBasement ? 'checked' : ''}></div>`;

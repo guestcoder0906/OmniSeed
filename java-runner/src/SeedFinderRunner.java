@@ -1070,6 +1070,14 @@ public class SeedFinderRunner {
                                if (name != null) {
                                    String clean = name.toLowerCase().replace("village/", "").replace("pillager_outpost/", "");
                                    pCounts.put(clean, pCounts.getOrDefault(clean, 0) + 1);
+                                   
+                                   // Map to common filter terms
+                                   if (clean.contains("weaponsmith") || clean.contains("armorer") || clean.contains("toolsmith")) {
+                                       pCounts.put("blacksmith", pCounts.getOrDefault("blacksmith", 0) + 1);
+                                   }
+                                   if (clean.contains("temple")) {
+                                       pCounts.put("church", pCounts.getOrDefault("church", 0) + 1);
+                                   }
                                }
                            } catch (Exception e2) {}
                        }
