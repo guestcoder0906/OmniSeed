@@ -1,0 +1,15 @@
+{
+  "name": "unified-seed-finder",
+  "version": "1.0.0",
+  "description": "Unified Multi-Engine Minecraft Seed Finder",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "prestart": "java -version && node -v",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

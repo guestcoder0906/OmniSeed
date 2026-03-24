@@ -1,0 +1,4 @@
+*.jar filter=lfs diff=lfs merge=lfs -text
+seedlocator/*.wasm filter=lfs diff=lfs merge=lfs -text
+*.wasm filter=lfs diff=lfs merge=lfs -text
+java-runner/**/*.class filter=lfs diff=lfs merge=lfs -text

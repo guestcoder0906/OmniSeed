@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniSeed | Advanced Minecraft Seed Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--bg2:#111827;--bg3:#1a1f36;--bg4:#222845;--a:#6366f1;--a2:#8b5cf6;--t:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--bd:#2d3555;--ok:#10b981;--wn:#f59e0b;--er:#ef4444;--r:12px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+button{cursor:pointer;border:none;font-family:inherit;font-size:.8rem;font-weight:500;transition:all .2s}
+input,select,textarea{font-family:inherit;font-size:.8rem;background:var(--bg2);color:var(--t);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--a)}
+.hdr{background:linear-gradient(135deg,#0f172a,#1e1b4b,#0f172a);border-bottom:1px solid var(--bd);padding:14px 0;position:sticky;top:0;z-index:100}
+.hi{max-width:1400px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px}
+.li{width:36px;height:36px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff}
+.logo h1{margin:0;font-size:1.15rem;font-weight:700;background:linear-gradient(135deg,#818cf8,#c084fc);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-size:.65rem;color:var(--t3);display:block}
+.tabs{display:flex;gap:3px;background:var(--bg2);border-radius:8px;padding:3px;border:1px solid var(--bd)}
+.tab{padding:6px 14px;border-radius:6px;color:var(--t2);font-weight:500;font-size:.75rem}
+.tab:hover{color:var(--t);background:rgba(99,102,241,.1)}
+.tab.act{background:var(--a);color:#fff}
+.mn{max-width:1400px;margin:0 auto;padding:20px}
+.pg{display:none}.pg.act{display:block}
+.eng{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.ec{background:var(--bg3);border:2px solid var(--bd);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.ec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0;transition:opacity .3s}
+.ec[data-e=cubiomes]::before{background:var(--ok)}.ec[data-e=seedlocator]::before{background:var(--wn)}.ec[data-e=seedfinding]::before{background:var(--a2)}
+.ec:hover{border-color:var(--a);transform:translateY(-1px)}.ec.sel{border-color:var(--a)}.ec.sel::before{opacity:1}
+.bg{display:inline-flex;padding:2px 8px;border-radius:16px;font-size:.65rem;font-weight:600;margin-bottom:6px}
+.ec[data-e=cubiomes] .bg{background:rgba(16,185,129,.15);color:var(--ok)}
+.ec[data-e=seedlocator] .bg{background:rgba(245,158,11,.15);color:var(--wn)}
+.ec[data-e=seedfinding] .bg{background:rgba(139,92,246,.15);color:var(--a2)}
+.ec h3{font-size:.9rem;font-weight:600;margin-bottom:3px}.ec p{font-size:.7rem;color:var(--t2);line-height:1.3}
+.ft{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}.fi{font-size:.6rem;padding:2px 6px;border-radius:10px;background:rgba(99,102,241,.1);color:var(--t2)}
+.pn{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.pn h3{font-size:.85rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.rw{display:flex;gap:10px;margin-bottom:8px;align-items:flex-end}
+.fg{flex:1;display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:.7rem;color:var(--t2);font-weight:500}
+.sc{border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--bg2)}
+.sc h4{font-size:.8rem;font-weight:600;margin-bottom:8px;color:var(--a)}
+.lb{border:1px solid var(--bd);border-radius:6px;padding:8px;max-height:220px;overflow-y:auto;background:var(--bg);margin-bottom:8px;min-height:36px}
+.li2{padding:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;margin-bottom:6px;font-size:.75rem;position:relative}
+.li2:last-child{margin-bottom:0}
+.li2 .rm{position:absolute;top:4px;right:4px;background:var(--er);color:#fff;border-radius:4px;padding:2px 6px;font-size:.6rem}
+.li2 .rm:hover{background:#dc2626}
+.li2 .cf{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px}
+.li2 .cf label{font-size:.65rem;color:var(--t3)}.li2 .cf input,.li2 .cf select{font-size:.7rem;padding:4px 6px}
+.cb{border:1px dashed var(--bd);border-radius:6px;padding:6px;min-height:28px;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px}
+.ct{background:var(--bg3);padding:2px 8px;border-radius:4px;font-size:.7rem}
+.btn{padding:8px 18px;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:6px;font-size:.8rem}
+.bp{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.3)}.bp:hover{transform:translateY(-1px)}
+.bd{background:var(--er);color:#fff}.bd:hover{background:#dc2626}
+.bo{background:transparent;border:1px solid var(--bd);color:var(--t2)}.bo:hover{border-color:var(--a);color:var(--t)}
+.ba{width:100%;padding:8px;background:var(--a);color:#fff;border-radius:6px;margin-top:4px;font-size:.75rem;font-weight:500}.ba:hover{background:#4f46e5}
+.rb{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);min-height:150px;overflow:hidden}
+.rh{padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;font-size:.8rem}
+.ry{padding:14px;max-height:400px;overflow-y:auto}
+.rr{padding:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.rr:hover{border-color:var(--a)}
+.rs{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:600;color:var(--a)}
+.rt{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.rtg{font-size:.65rem;padding:2px 6px;border-radius:10px;background:rgba(16,185,129,.15);color:var(--ok)}
+.rd{margin-top:6px;padding-top:6px;border-top:1px solid var(--bd);display:none;font-size:.75rem;color:var(--t2)}
+.rr.ex .rd{display:block}
+.ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;justify-content:center;align-items:center}
+.ov.on{display:flex}
+.om{background:var(--bg3);border:1px solid var(--bd);border-radius:16px;padding:36px;text-align:center;max-width:380px;width:90%}
+.sp{width:50px;height:50px;border:3px solid var(--bd);border-top-color:var(--a);border-radius:50%;animation:spi 1s linear infinite;margin:0 auto 16px}
+@keyframes spi{to{transform:rotate(360deg)}}
+.lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;margin-top:12px}
+.lii{background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:8px;display:flex;align-items:center;gap:8px}
+.lic{width:28px;height:28px;background:linear-gradient(135deg,var(--a),var(--a2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0}
+.lin{font-size:.75rem;font-weight:500}.lik{font-size:.65rem;color:var(--t3)}
+.rft{width:100%;border-collapse:collapse;font-size:.75rem}
+.rft th{text-align:left;padding:6px 10px;background:var(--bg2);color:var(--t2);font-weight:600;border-bottom:1px solid var(--bd);position:sticky;top:0}
+.rft td{padding:5px 10px;border-bottom:1px solid rgba(45,53,85,.5)}
+.rfw{max-height:350px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r)}
+.sb{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+@keyframes fi2{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.an{animation:fi2 .3s ease-out}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}
+@media(max-width:768px){.eng{grid-template-columns:1fr}.rw{flex-direction:column}}
+</style>
+</head>
+<body>
+<header class="hdr"><div class="hi">
+<div class="logo"><div class="li">OS</div><div><h1>OmniSeed</h1><span>Advanced Minecraft Seed Finder <strong style="color:var(--ok);font-size:1.2rem">v3.5 (PROD READY)</strong> - Sync: 08:00 UTC</span></div></div>
+<div class="tabs" id="mt">
+<button class="tab act" data-tab="finder">🔍 Seed Finder</button>
+<button class="tab" data-tab="loot">🎁 Loot Explorer</button>
+</div></div></header>
+
+<main class="mn">
+<!-- ===== SEED FINDER ===== -->
+<div class="pg act" id="pg-finder">
+
+<div style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(139,92,246,.1));border:1px solid var(--a);border-radius:var(--r);padding:16px;margin-bottom:16px">
+  <h3 style="color:var(--a);font-size:.9rem;margin-bottom:6px">🧠 Unified Auto-Routing Engine</h3>
+  <p style="font-size:.7rem;color:var(--t2)">The backend automatically analyzes your requested features and routes your scan to the fastest capable engine (Cubiomes ⚡, SeedLocator 🔬, or SeedFinding 🎯).</p>
+</div>
+
+<!-- SCAN CONFIG -->
+<div class="pn"><h3>⚙️ Scan Configuration</h3>
+<div class="rw">
+<div class="fg"><label>MC Version</label><select id="ver"><option value="1.21">1.21</option><option value="1.20" selected>1.20</option><option value="1.19">1.19</option><option value="1.18">1.18</option><option value="1.17">1.17</option><option value="1.16">1.16</option><option value="1.15">1.15</option><option value="1.14">1.14</option><option value="1.13">1.13</option><option value="1.12">1.12</option><option value="1.11">1.11</option><option value="1.10">1.10</option><option value="1.9">1.9</option><option value="1.8">1.8</option></select></div>
+<div class="fg"><label>Edition</label><select id="edt"><option value="Java">Java</option><option value="Bedrock">Bedrock</option></select></div>
+<div class="fg"><label>Search Distance (blocks)</label><input type="number" id="sdist" value="1000" max="10000"></div>
+</div>
+<div class="rw">
+<div class="fg"><label>Starting Seed</label><input type="number" id="sseed" value="0"></div>
+<div class="fg"><label>Seeds to Scan</label><select id="scount"><option value="100">100</option><option value="500">500</option><option value="1000" selected>1,000</option><option value="5000">5,000</option><option value="10000">10,000</option><option value="50000">50,000</option></select></div>
+<div class="fg"><label>Max Results (auto-stop)</label><input type="number" id="mres" value="10" min="1" max="100"></div>
+</div>
+<div class="rw">
+<div class="fg"><label><input type="checkbox" id="uspn" checked style="width:auto;margin-right:4px"> Search from Spawn</label></div>
+<div class="fg"><label>Custom X</label><input type="number" id="cx" value="0" disabled></div>
+<div class="fg"><label>Custom Z</label><input type="number" id="cz" value="0" disabled></div>
+<div class="fg"><label>&nbsp;</label><button class="bo" onclick="document.getElementById('sseed').value=Math.floor(Math.random()*2147483647)" style="width:100%">🎲 Random</button></div>
+</div>
+</div>
+
+<!-- REQUIRED STRUCTURES -->
+<div class="pn"><h3>🏗️ Required Structures <span style="font-size:.65rem;color:var(--t3);font-weight:400">— Add structures with biome, height, and count filters</span></h3>
+<div class="rw">
+<div class="fg"><label>Structure</label><select id="sdd"></select></div>
+<div class="fg"><label>&nbsp;</label><button class="ba" onclick="addStruct()">+ Add Structure</button></div>
+<div class="fg" id="ig_basement_container" style="display:none"><label>Has Basement</label><input type="checkbox" id="ig_basement"></div>
+</div>
+<div class="lb" id="slist"></div>
+</div>
+
+<!-- STRUCTURE CLUSTERS -->
+<div class="pn"><h3>🔗 Structure Clusters <span style="font-size:.65rem;color:var(--t3);font-weight:400">— Find groups of structures close together</span></h3>
+<div class="rw">
+<div class="fg"><label>Add Structure to Cluster Pool</label><select id="cdd"></select></div>
+<div class="fg"><label>&nbsp;</label><button class="ba" onclick="addClust()">+ Add to Cluster Pool</button></div>
+</div>
+<div class="lb" id="clist"></div>
+<div class="rw">
+<div class="fg"><label>Min Cluster Size</label><input type="number" id="mcc" value="2" min="2"></div>
+<div class="fg"><label>Max Cluster Range (blocks)</label><input type="number" id="mcr" value="32"></div>
+</div>
+
+<!-- Invalid cluster combos -->
+<div class="sc"><h4>❌ Invalid Cluster Combos <span style="font-size:.6rem;color:var(--t3);font-weight:400">— Exclude specific structure combos</span></h4>
+<div class="cb" id="icb"></div>
+<div class="rw">
+<div class="fg"><select id="idd"></select></div>
+<div class="fg"><button class="ba" onclick="addIC()">+ Add to Combo</button></div>
+</div>
+<button class="ba" id="sic" onclick="saveIC()" style="display:none;background:var(--wn)">💾 Save Combo</button>
+<div class="lb" id="ilist"></div>
+</div>
+</div>
+
+<!-- REQUIRED BIOMES -->
+<div class="pn"><h3>🌿 Required Biomes <span style="font-size:.65rem;color:var(--t3);font-weight:400">— Filter by specific biome presence & size</span></h3>
+<div class="rw">
+<div class="fg"><label>Biome</label><select id="bdd"></select></div>
+<div class="fg"><label>&nbsp;</label><button class="ba" onclick="addBio()">+ Add Required Biome</button></div>
+</div>
+<div class="lb" id="blist"></div>
+</div>
+
+<!-- CLUSTERED BIOMES -->
+<div class="pn"><h3>🌍 Clustered Biomes <span style="font-size:.65rem;color:var(--t3);font-weight:400">— Find biomes that generate next to each other</span></h3>
+<div class="cb" id="bcb"></div>
+<div class="rw">
+<div class="fg"><select id="bcdd"></select></div>
+<div class="fg"><button class="ba" onclick="addBC()">+ Add to Combo</button></div>
+</div>
+<button class="ba" id="sbc" onclick="saveBC()" style="display:none;background:var(--wn)">💾 Save Biome Combo</button>
+<div class="lb" id="bclist"></div>
+</div>
+
+<!-- BLOCK-LEVEL FILTERS -->
+<div class="pn"><h3>🧱 Block-Level Filters <span style="font-size:.65rem;color:var(--a);font-weight:400">— Dynamic custom block structures (Pillars, Shapes, Ores)</span></h3>
+<p style="font-size:.7rem;color:var(--t3);margin-bottom:8px">Test specific chunk coordinates for custom block arrangements, sizes, or ore vein sizes.</p>
+<div class="rw">
+<div class="fg" style="flex:1.5"><label>Dimension Rule <a href="#" onclick="document.getElementById('syntaxModal').style.display='flex'">📖 Syntax Guide</a></label><input type="text" id="bfdim" value="1x10+x1" placeholder="e.g. 1x2-3(center:3-5x1)+1... or [0,0,0]+[3,0,0]"></div>
+<div class="fg"><label>Match Count</label><select id="bfcnt">
+<option value="all">All Matches</option>
+<option value="1">Exactly 1</option>
+<option value="1-3">Range 1-3</option>
+<option value="2">Exactly 2</option>
+<option value="3">Exactly 3</option>
+<option value="5+">5 or more</option>
+<option value="10+">10 or more</option>
+</select></div>
+<div class="fg"><label>Ore/Block Type</label><select id="bfb" multiple style="height:100px;background:var(--bg2);border-radius:4px">
+<option value="any">Any Block</option>
+<option value="stone">Stone</option>
+<option value="coal_ore" selected>Coal</option>
+<option value="iron_ore" selected>Iron</option>
+<option value="copper_ore">Copper</option>
+<option value="gold_ore">Gold</option>
+<option value="redstone_ore">Redstone</option>
+<option value="emerald_ore">Emerald</option>
+<option value="lapis_ore">Lapis</option>
+<option value="diamond_ore" selected>Diamond</option>
+<option value="deepslate_coal_ore">Deepslate Coal Ore</option>
+<option value="deepslate_iron_ore">Deepslate Iron Ore</option>
+<option value="deepslate_copper_ore">Deepslate Copper Ore</option>
+<option value="deepslate_gold_ore">Deepslate Gold Ore</option>
+<option value="deepslate_redstone_ore">Deepslate Redstone Ore</option>
+<option value="deepslate_emerald_ore">Deepslate Emerald Ore</option>
+<option value="deepslate_lapis_ore">Deepslate Lapis Lazuli Ore</option>
+<option value="deepslate_diamond_ore">Deepslate Diamond Ore</option>
+<option value="nether_quartz_ore">Nether Quartz Ore</option>
+<option value="nether_gold_ore">Nether Gold Ore</option>
+<option value="ancient_debris">Ancient Debris</option>
+<option value="obsidian">Obsidian</option>
+<option value="spawner">Spawner</option>
+<option value="sponge">Sponge</option>
+<option value="wet_sponge">Wet Sponge</option>
+<option value="bell">Bell</option>
+<option value="suspicious_sand">Suspicious Sand</option>
+<option value="suspicious_gravel">Suspicious Gravel</option>
+</select></div>
+<div class="fg"><label>Vein Size (Min)</label><input type="range" id="bfvs" min="1" max="100" value="8" style="width:100%"><span id="bfvs_val" style="font-size:0.65rem;color:var(--t3)">8 blocks</span></div>
+<div class="fg" style="max-width:80px;justify-content:flex-end"><button class="btn bo" style="width:100%" onclick="addBF()">Add Filter</button></div>
+</div>
+<div class="lb" id="bflist"></div>
+</div>
+
+<!-- LOOT FILTERS -->
+<div class="pn" id="lfpn"><h3>🎁 Strict Loot Filters <span style="font-size:.65rem;color:var(--a2);font-weight:400">— Exact items & enchantments</span></h3>
+<p style="font-size:.7rem;color:var(--t3);margin-bottom:8px">Seeds will only match if the structure's chest naturally generates this item.</p>
+<div class="rw">
+<div class="fg"><label>Loot Table</label><select id="lft" onchange="updateLootItems()"><optgroup label="Structures"><option value="chests/desert_pyramid">Desert Pyramid</option><option value="chests/jungle_temple">Jungle Temple</option><option value="chests/buried_treasure">Buried Treasure</option><option value="chests/end_city_treasure">End City</option><option value="chests/abandoned_mineshaft">Mineshaft</option><option value="chests/nether_bridge">Nether Fortress</option><option value="chests/pillager_outpost">Pillager Outpost</option><option value="chests/simple_dungeon">Dungeon</option><option value="chests/igloo_chest">Igloo</option></optgroup><optgroup label="Shipwrecks"><option value="chests/shipwreck_treasure">Treasure</option><option value="chests/shipwreck_supply">Supply</option><option value="chests/shipwreck_map">Map</option></optgroup><optgroup label="Stronghold"><option value="chests/stronghold_corridor">Corridor</option><option value="chests/stronghold_crossing">Crossing</option><option value="chests/stronghold_library">Library</option></optgroup><optgroup label="Village (16)"><option value="chests/village/village_weaponsmith">Weaponsmith</option><option value="chests/village/village_toolsmith">Toolsmith</option><option value="chests/village/village_armorer">Armorer</option><option value="chests/village/village_butcher">Butcher</option><option value="chests/village/village_cartographer">Cartographer</option><option value="chests/village/village_fisher">Fisher</option><option value="chests/village/village_fletcher">Fletcher</option><option value="chests/village/village_mason">Mason</option><option value="chests/village/village_shepherd">Shepherd</option><option value="chests/village/village_tannery">Tannery</option><option value="chests/village/village_temple">Temple</option><option value="chests/village/village_plains_house">Plains</option><option value="chests/village/village_desert_house">Desert</option><option value="chests/village/village_taiga_house">Taiga</option><option value="chests/village/village_snowy_house">Snowy</option><option value="chests/village/village_savanna_house">Savanna</option></optgroup><optgroup label="Bastions"><option value="chests/bastion_treasure">Treasure</option><option value="chests/bastion_bridge">Bridge</option><option value="chests/bastion_hoglin_stable">Hoglin Stable</option><option value="chests/bastion_other">Other</option></optgroup><optgroup label="Archaeology"><option value="archaeology/desert_well">Desert Well</option><option value="archaeology/desert_pyramid">Desert Pyramid</option><option value="archaeology/trail_ruins_common">Trail Common</option><option value="archaeology/trail_ruins_rare">Trail Rare</option><option value="archaeology/ocean_ruin_warm">Ocean Warm</option><option value="archaeology/ocean_ruin_cold">Ocean Cold</option></optgroup><optgroup label="Fishing"><option value="gameplay/fishing">All</option><option value="gameplay/fishing/fish">Fish</option><option value="gameplay/fishing/junk">Junk</option><option value="gameplay/fishing/treasure">Treasure</option></optgroup></select></div>
+<div class="fg"><label>Required Item Name</label><select id="lfi"></select><span style="font-size:0.65rem;color:var(--t3)" id="lfi_load">Loading items...</span></div>
+<div class="fg"><label>Min Count</label><input type="number" id="lfc" value="1" min="1"></div>
+<div class="fg"><label>Req. Enchantment</label><select id="lfe"><option value="">Any/None</option><option value="mending">Mending</option><option value="unbreaking">Unbreaking</option><option value="fortune">Fortune</option><option value="efficiency">Efficiency</option><option value="sharpness">Sharpness</option><option value="protection">Protection</option><option value="feather_falling">Feather Falling</option><option value="silk_touch">Silk Touch</option><option value="looting">Looting</option></select></div>
+<div class="fg"><label>Min Level</label><input type="number" id="lfel" value="1" min="1" max="5"></div>
+</div>
+<button class="ba" onclick="addLF()">+ Add Loot Filter</button>
+<div class="lb" id="lflist"></div>
+</div>
+
+<!-- SCAN -->
+<div class="sb">
+<button class="btn bp" id="bsc" onclick="doScan()">🚀 Start Scan</button>
+<button class="btn bd" id="bst" onclick="doStop()" style="display:none">⏹ Stop</button>
+<button class="btn bo" onclick="clrRes()">🗑 Clear</button>
+<span style="flex:1"></span><span id="sts" style="font-size:.75rem;color:var(--t3)"></span>
+</div>
+<div class="rb"><div class="rh"><span>🌱 Matching Seeds</span><span id="rc">0 results</span></div>
+<div class="ry" id="rbody"><div style="text-align:center;padding:30px;color:var(--t3)"><p style="font-size:1.5rem;margin-bottom:6px">🌍</p><p>Configure and scan to find seeds.</p></div></div></div>
+</div>
+
+<!-- ===== LOOT EXPLORER ===== -->
+<div class="pg" id="pg-loot">
+<div class="pn"><h3>🎁 Loot Explorer <span style="font-size:.7rem;color:var(--t3);font-weight:400">— Predict exact chest contents from seed (SeedFinding engine)</span></h3>
+<div class="rw">
+<div class="fg"><label>World Seed</label><input type="number" id="ls" value="12345"></div>
+<div class="fg"><label>MC Version</label><select id="lv"><option value="1.18" selected>1.18</option><option value="1.17">1.17</option><option value="1.16">1.16</option><option value="1.15">1.15</option><option value="1.14">1.14</option></select></div>
+<div class="fg"><label>Loot Table</label><select id="lt"><optgroup label="Structures"><option value="chests/desert_pyramid">Desert Pyramid</option><option value="chests/jungle_temple">Jungle Temple</option><option value="chests/buried_treasure">Buried Treasure</option><option value="chests/end_city_treasure">End City</option><option value="chests/igloo_chest">Igloo</option><option value="chests/abandoned_mineshaft">Mineshaft</option><option value="chests/nether_bridge">Nether Fortress</option><option value="chests/pillager_outpost">Outpost</option><option value="chests/simple_dungeon">Dungeon</option></optgroup><optgroup label="Shipwrecks"><option value="chests/shipwreck_map">Map</option><option value="chests/shipwreck_supply">Supply</option><option value="chests/shipwreck_treasure">Treasure</option></optgroup><optgroup label="Stronghold"><option value="chests/stronghold_corridor">Corridor</option><option value="chests/stronghold_crossing">Crossing</option><option value="chests/stronghold_library">Library</option></optgroup><optgroup label="Village"><option value="chests/village/village_weaponsmith">Weaponsmith</option><option value="chests/village/village_toolsmith">Toolsmith</option><option value="chests/village/village_armorer">Armorer</option><option value="chests/village/village_butcher">Butcher</option><option value="chests/village/village_temple">Temple</option><option value="chests/village/village_plains_house">Plains</option></optgroup><optgroup label="Archaeology"><option value="archaeology/desert_well">Desert Well</option><option value="archaeology/trail_ruins_rare">Trail Rare</option><option value="archaeology/ocean_ruin_cold">Ocean Cold</option></optgroup><optgroup label="Fishing"><option value="gameplay/fishing">All</option><option value="gameplay/fishing/treasure">Treasure</option></optgroup></select></div>
+<div class="fg"><label>&nbsp;</label><button class="btn bp" onclick="qLoot()">🔮 Predict Loot</button></div>
+</div>
+<div id="lr" class="lg"></div></div>
+</div>
+
+</main>
+
+<!-- Syntax Modal -->
+<div id="syntaxModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;">
+<div style="background:var(--bg2);padding:24px;border-radius:8px;max-width:600px;width:90%;border:1px solid rgba(255,255,255,0.1);max-height:80vh;overflow-y:auto;">
+<h3 style="margin-top:0;color:var(--a);">📖 Advanced Block Pattern Syntax Guide</h3>
+<p style="font-size:0.9rem;color:var(--t2);margin-bottom:12px;">The Unified Engine uses a powerful voxel-logic parser to match complex 3D structures. Patterns are evaluated within each chunk in the search radius.</p>
+
+<div style="font-size:0.85rem;color:var(--t2);line-height:1.6;">
+  <div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;">
+    <strong style="color:var(--a2)">1. Exact Voxel Offsets (Disconnected)</strong><br>
+    Syntax: <code>[X,Y,Z]+[X,Y,Z]...</code><br>
+    Example: <code>[0,0,0]+[3,0,0]+[1,-1,0]+[2,-1,0]</code> (Smiley Face pattern). Blocks are placed exactly at these relative offsets.
+  </div>
+
+  <div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;">
+    <strong style="color:var(--a2)">2. 3D Geometric Volumes (Arrays)</strong><br>
+    Syntax: <code>WxHxD</code><br>
+    Example: <code>1x10x1</code> (A 10-block high pillar). Supports variable heights with ranges like <code>1x10-15x1</code>.
+  </div>
+
+  <div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;">
+    <strong style="color:var(--a2)">3. Composite/Nested Logic (Composite Dimensions)</strong><br>
+    Syntax: <code>[X,Y,Z(label)=Shape]+[X,Y,Z=Shape]</code><br>
+    Example: <code>[0,0,0(up)=1x2x1]+[0,-1,0(down)=(center: 3x1x1)]</code><br>
+    Combines exact relative positioning with volume templates. Labels like <code>(up)</code> specify orientation or context.
+  </div>
+
+  <div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;">
+    <strong style="color:var(--a2)">4. Natural Generation Veins</strong><br>
+    Syntax: <code>N+</code> or <code>vein:N+</code><br>
+    Example: <code>8+</code> (Finds ore veins of 8 blocks or more). Use this for realistic ore blobs.
+  </div>
+
+  <div style="margin-bottom:12px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;">
+    <strong style="color:var(--a2)">5. Modifiers & Logical States</strong><br>
+    Appending <code>:dug</code> or <code>:filled</code> allows matching hollow structures (like rooms) vs solid masses. <code>(center: ...)</code> allows auto-centering sub-shapes on the parent coordinate.
+  </div>
+</div>
+<div style="text-align:right;margin-top:16px;">
+<button class="btn bo" onclick="document.getElementById('syntaxModal').style.display='none'">Close</button>
+</div>
+</div>
+</div>
+
+<!-- Overlay -->
+<div class="ov" id="sov"><div class="om"><div class="sp"></div>
+<div style="font-size:1rem;font-weight:600;margin-bottom:6px">Scanning Seeds...</div>
+<div id="os" style="font-size:.8rem;color:var(--t2)">Scanned: 0 | Found: 0</div>
+<div id="ot" style="font-size:.7rem;color:var(--t3);margin-bottom:16px">Elapsed: 0s</div>
+<button class="btn bd" onclick="doStop()">⏹ Stop</button></div></div>
+
+<script>
+const STR=["Ancient City","Bastion","Buried Treasure","Cave","Desert Pyramid","End City","Fortress","Fossil","Igloo","Jungle Temple","Mansion","Mineshaft","Monument","Ocean Ruin","Ore Vein","Outpost","Ravine","Ruined Portal","Shipwreck","Stronghold","Swamp Hut","Village"];
+
+const BIO=["Ocean","Plains","Desert","Windswept Hills","Forest","Taiga","Swamp","River","Frozen Ocean","Frozen River","Snowy Plains","Snowy Mountains","Mushroom Fields","Mushroom Fields Shore","Beach","Desert Hills","Windswept Forest","Taiga Hills","Mountain Edge","Jungle","Jungle Hills","Sparse Jungle","Deep Ocean","Stony Shore","Snowy Beach","Birch Forest","Birch Forest Hills","Dark Forest","Snowy Taiga","Snowy Taiga Hills","Old Growth Pine Taiga","Giant Tree Taiga Hills","Wooded Mountains","Savanna","Savanna Plateau","Badlands","Wooded Badlands","Badlands Plateau","Warm Ocean","Lukewarm Ocean","Cold Ocean","Deep Warm Ocean","Deep Lukewarm Ocean","Deep Cold Ocean","Deep Frozen Ocean","Sunflower Plains","Desert Lakes","Windswept Gravelly Hills","Flower Forest","Taiga Mountains","Swamp Hills","Ice Spikes","Modified Jungle","Modified Jungle Edge","Old Growth Birch Forest","Tall Birch Hills","Dark Forest Hills","Snowy Taiga Mountains","Old Growth Spruce Taiga","Giant Spruce Taiga Hills","Gravelly Mountains+","Windswept Savanna","Shattered Savanna Plateau","Eroded Badlands","Modified Wooded Badlands Plateau","Modified Badlands Plateau","Bamboo Jungle","Bamboo Jungle Hills","Dripstone Caves","Lush Caves","Meadow","Grove","Snowy Slopes","Frozen Peaks","Jagged Peaks","Stony Peaks","Deep Dark","Mangrove Swamp","Cherry Grove","Pale Garden","Island","Encircling Terrain","Valley"];
+
+let sid=null,si=null,st0=null,res=[];
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act'));
+document.querySelectorAll('.pg').forEach(x=>x.classList.remove('act'));
+t.classList.add('act');document.getElementById('pg-'+t.dataset.tab).classList.add('act');});
+
+// Spawn toggle
+document.getElementById('uspn').onchange=e=>{document.getElementById('cx').disabled=e.target.checked;document.getElementById('cz').disabled=e.target.checked;};
+
+// Dropdown helpers
+function popDD(id,a){const s=document.getElementById(id);s.innerHTML='';a.forEach(o=>{const op=document.createElement('option');op.value=o;op.textContent=o;s.appendChild(op)})}
+function popStr(){popDD('sdd',STR);popDD('cdd',STR);popDD('idd',STR)}
+popStr();popDD('bdd',BIO);popDD('bcdd',BIO);
+
+// Fetch items for loot table
+async function updateLootItems() {
+  const table = document.getElementById('lft').value;
+  document.getElementById('lfi_load').style.display = 'inline';
+  try {
+    const r = await fetch(`/api/seedfinding/items?table=${encodeURIComponent(table)}`);
+    const d = await r.json();
+    if(d.items) {
+      popDD('lfi', d.items.sort());
+    }
+  } catch(e) {}
+  document.getElementById('lfi_load').style.display = 'none';
+}
+updateLootItems();
+
+// Block Constraints
+function addBF() {
+  const dim=document.getElementById('bfdim').value.trim();
+  const cnt=document.getElementById('bfcnt').value.trim() || "all";
+  const b=document.getElementById('bfb').value;
+  if (!dim) return;
+  const d=document.createElement('div');d.className='li2 an';
+  d.innerHTML=`🧱 Omni-Chunk Shape: Must match <strong>${dim}</strong> of <strong>${b}</strong> (Count: ${cnt})
+  <button class="rm" onclick="this.parentElement.remove()">✕</button>
+  <div class="bdata" data-cond="${dim}" data-b="${b}" data-cnt="${cnt}" style="display:none"></div>`;
+  document.getElementById('bflist').appendChild(d);
+}
+
+
+// Add structure with full config
+function addStruct(){
+const s=document.getElementById('sdd').value;if(!s)return;
+const d=document.createElement('div');d.className='li2 an';
+
+let extInputs = '';
+if (s === 'Village') {
+    extInputs = `<div><label title="Requires the village to have at least this many built blacksmith shops">Min Blacksmiths</label><input type="number" class="sv_blk"></div>
+                 <div><label title="Requires the village to have at least this many built churches">Min Churches</label><input type="number" class="sv_chr"></div>
+                 <div><label title="Minimum total buildings in the village">Total Buildings</label><input type="number" class="sv_tot"></div>`;
+} else if (s === 'Outpost') {
+    extInputs = `<div><label title="Requires the outpost to spawn with at least this many Iron Golem cages">Min Golem Cages</label><input type="number" class="so_cag"></div>`;
+} else if (s === 'Mansion') {
+    extInputs = `<div><label title="Finds a mansion that spawned this exact room layout identifier (e.g. 1x1_as1)">Specific Room</label><input type="text" class="sm_rm" placeholder="Optional identifier"></div>`;
+} else if (s === 'Monument') {
+    extInputs = `<div><label title="Requires at least this many sponge rooms in the monument">Min Sponge Rooms</label><input type="number" class="smo_sp"></div>
+                 <div><label title="Requires at least this many gold blocks in the core room">Min Gold Rooms</label><input type="number" class="smo_g"></div>`;
+} else if (s === 'Igloo') {
+    const hasBasement = document.getElementById('ig_basement').checked;
+    extInputs = `<div><label>Basement Only</label><input type="checkbox" class="si_bas" ${hasBasement ? 'checked' : ''}></div>`;
+}
+
+d.innerHTML=`<strong>${s}</strong><button class="rm" onclick="this.parentElement.remove()">✕</button>
+<div class="cf">
+${extInputs}
+<div><label title="How many of this structure must exist in the search radius">Min Count</label><input type="number" class="sc1" value="1" min="1"></div>
+<div><label title="Structure must spawn inside or adjacent to this biome">Near Biome</label><select class="sb1"><option value="">None</option>${BIO.map(b=>`<option value="${b}">${b}</option>`).join('')}</select></div>
+<div><label title="Max distance (in blocks) the structure can be from the chosen biome">Biome Proximity</label><input type="number" class="sp1" value="0" placeholder="0 = exactly inside"></div>
+<div><label title="Minimum size of the surrounding biome patch (-1 means ignore this rule)">Min Biome Size</label><input type="number" class="sn1" placeholder="-1 (ignore)"></div>
+<div><label title="Maximum size of the surrounding biome patch (-1 means ignore this rule)">Max Biome Size</label><input type="number" class="sx1" placeholder="-1 (ignore)"></div>
+<div><label title="Minimum Y height the structure can spawn at (-9999 means any depth)">Min Height</label><input type="number" class="sh1" placeholder="-9999 (any)"></div>
+<div><label title="Maximum Y height the structure can spawn at (9999 means any height)">Max Height</label><input type="number" class="shx" placeholder="9999 (any)"></div>
+</div>`;
+document.getElementById('slist').appendChild(d)}
+
+// Add cluster struct
+function addClust(){const s=document.getElementById('cdd').value;if(!s)return;
+const d=document.createElement('div');d.className='li2 an';d.innerHTML=`${s}<button class="rm" onclick="this.parentElement.remove()">✕</button>`;
+document.getElementById('clist').appendChild(d)}
+
+// Invalid combos
+let cIC=[];
+function addIC(){const s=document.getElementById('idd').value;if(s&&!cIC.includes(s)){cIC.push(s);rCB('icb',cIC)}document.getElementById('sic').style.display=cIC.length>=2?'block':'none'}
+function saveIC(){if(cIC.length<2)return;const d=document.createElement('div');d.className='li2 an';d.innerHTML=`${cIC.join(' + ')}<button class="rm" onclick="this.parentElement.remove()">✕</button>`;
+document.getElementById('ilist').appendChild(d);cIC=[];rCB('icb',[]);document.getElementById('sic').style.display='none'}
+function rCB(id,a){document.getElementById(id).innerHTML=a.map(x=>`<span class="ct">${x}</span>`).join('')}
+
+// Biomes
+function addBio(){const b=document.getElementById('bdd').value;if(!b)return;
+const d=document.createElement('div');d.className='li2 an';
+d.innerHTML=`<strong>${b}</strong><button class="rm" onclick="this.parentElement.remove()">✕</button>
+<div class="cf"><div><label title="Minimum block surface area the biome must cover (-1 means ignore this rule)">Min Patch Size</label><input type="number" placeholder="-1 (ignore)"></div><div><label title="Maximum block surface area the biome must cover (-1 means ignore this rule)">Max Patch Size</label><input type="number" placeholder="-1 (ignore)"></div></div>`;
+document.getElementById('blist').appendChild(d)}
+
+// Clustered biomes
+var cBC=[];
+function addBC(){const b=document.getElementById('bcdd').value;if(b&&!cBC.includes(b)){cBC.push(b);rCB('bcb',cBC)}document.getElementById('sbc').style.display=cBC.length>=2?'block':'none'}
+function saveBC(){if(cBC.length<2)return;const d=document.createElement('div');d.className='li2 an';
+d.innerHTML=`<strong>${cBC.join(' + ')}</strong><button class="rm" onclick="this.parentElement.remove()">✕</button>
+<div class="cf"><div><label title="Minimum total surface area cluster of these biomes combined (-1 means ignore this rule)">Min Size</label><input type="number" placeholder="-1 (ignore)"></div><div><label title="Maximum total surface area cluster of these biomes combined (-1 means ignore this rule)">Max Size</label><input type="number" placeholder="-1 (ignore)"></div></div>`;
+document.getElementById('bclist').appendChild(d);cBC=[];rCB('bcb',[]);document.getElementById('sbc').style.display='none'}
+
+// Loot filters
+function addLF(){const t=document.getElementById('lft').value,i=document.getElementById('lfi').value,c=document.getElementById('lfc').value;
+const e=document.getElementById('lfe').value, el=document.getElementById('lfel').value;
+if(!i)return;const d=document.createElement('div');d.className='li2 an';
+let encStr = e ? ` [${e} lvl ${el}+]` : '';
+d.innerHTML=`🎁 <strong>${t}</strong> must contain <strong>${i}</strong> ×${c}${encStr}<button class="rm" onclick="this.parentElement.remove()">✕</button><div class="bdata" data-t="${t}" data-i="${i}" data-c="${c}" data-e="${e}" data-el="${el}" style="display:none"></div>`;
+document.getElementById('lflist').appendChild(d)}
+
+// Update vein size label
+document.getElementById('bfvs')?.addEventListener('input', (e) => {
+    document.getElementById('bfvs_val').textContent = e.target.value + ' blocks';
+});
+
+async function doScan() {
+    const structs = [];
+    document.querySelectorAll('#slist .li2').forEach(li => {
+        let n = li.querySelector('strong').textContent;
+        let extParams = [];
+        if (n === 'Village') {
+            if (li.querySelector('.sv_blk')?.value) extParams.push('blacksmith=' + li.querySelector('.sv_blk').value);
+            if (li.querySelector('.sv_chr')?.value) extParams.push('church=' + li.querySelector('.sv_chr').value);
+            if (li.querySelector('.sv_tot')?.value) extParams.push('total=' + li.querySelector('.sv_tot').value);
+        } else if (n === 'Outpost') {
+            if (li.querySelector('.so_cag')?.value) extParams.push('cages=' + li.querySelector('.so_cag').value);
+        } else if (n === 'Mansion') {
+            if (li.querySelector('.sm_rm')?.value) extParams.push('room=' + li.querySelector('.sm_rm').value);
+        } else if (n === 'Monument') {
+            if (li.querySelector('.smo_g')?.value) extParams.push('gold=' + li.querySelector('.smo_g').value);
+            if (li.querySelector('.smo_sp')?.value) extParams.push('sponge=' + li.querySelector('.smo_sp').value);
+        } else if (n === 'Igloo') {
+            extParams.push('basement=' + (li.querySelector('.si_bas')?.checked ? 'true' : 'false'));
+        }
+        const extParamStr = extParams.length > 0 ? `:${extParams.join(',')}` : '';
+        const minCount = li.querySelector('.sc1')?.value || '1';
+        const nearBiome = li.querySelector('.sb1')?.value || '';
+        const biomeProximity = li.querySelector('.sp1')?.value || '0';
+        const minBiomeSize = li.querySelector('.sn1')?.value || '-1';
+        const maxBiomeSize = li.querySelector('.sx1')?.value || '-1';
+        const minHeight = li.querySelector('.sh1')?.value || '-9999';
+        const maxHeight = li.querySelector('.shx')?.value || '9999';
+        structs.push(`${n}${extParamStr};${minCount};${nearBiome};${biomeProximity};${minBiomeSize};${maxBiomeSize};${minHeight};${maxHeight}`);
+    });
+
+    const biomes = Array.from(document.querySelectorAll('#blist .li2')).map(li => {
+        const name = li.querySelector('strong').textContent;
+        const minSize = li.querySelector('input:nth-of-type(1)')?.value || '-1';
+        const maxSize = li.querySelector('input:nth-of-type(2)')?.value || '-1';
+        return `${name};${minSize};${maxSize}`;
+    });
+
+    const lootFilters = Array.from(document.querySelectorAll('#lflist .bdata')).map(div => 
+        `${div.dataset.t};${div.dataset.i};${div.dataset.c};${div.dataset.e||''};${div.dataset.el||0}`
+    );
+
+    const blockFilters = Array.from(document.querySelectorAll('#bflist .bdata')).map(div => 
+        `${div.dataset.cond};${div.dataset.b};${div.dataset.cnt};${div.dataset.vs}`
+    );
+
+    const body = {
+        version: document.getElementById('ver').value,
+        startSeed: +(document.getElementById('sseed').value || 0),
+        endSeed: +(document.getElementById('sseed').value || 0) + +(document.getElementById('scount').value || 1000),
+        searchRadius: +(document.getElementById('sdist').value || 1000),
+        maxResults: +(document.getElementById('mres').value || 10),
+        structures: structs.join('|'),
+        biomes: biomes.join('|'),
+        lootFilters: lootFilters.join('|'),
+        blockFilters: blockFilters.join('|')
+    };
+
+    try {
+        const r = await fetch('/api/scan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        sid = d.sessionId;
+        shOv();
+        st0 = Date.now();
+        res = [];
+        rRes();
+        if (d.engine) document.getElementById('sts').textContent = `Using: ${d.engine} Engine`;
+        si = setInterval(poll, 500);
+    } catch (e) {
+        alert('Scan failed: ' + e.message);
+    }
+}
+
+async function poll() {
+    if (!sid) return;
+    try {
+        const r = await fetch(`/api/scan/${sid}`);
+        const d = await r.json();
+        document.getElementById('os').textContent = `Scanned: ${d.scanned} | Found: ${d.found}`;
+        document.getElementById('ot').textContent = `Elapsed: ${Math.floor((Date.now() - st0) / 1000)}s`;
+        if (d.results?.length > res.length) {
+            res = d.results;
+            rRes();
+        }
+        if (d.errors?.length > 0) {
+            document.getElementById('sts').innerHTML = d.errors.map(e => `<div style="color:var(--er)">⚠️ ERROR: ${e}</div>`).join('');
+        }
+        if (d.done) {
+            hiOv();
+            if (!d.errors?.length) document.getElementById('sts').textContent = `Done: ${d.scanned} scanned, ${d.found} found`;
+        }
+    } catch (e) {}
+}
+
+async function doStop() {
+    if (sid) await fetch(`/api/scan/${sid}/stop`, {method: 'POST'});
+    hiOv();
+}
+
+function shOv() {
+    document.getElementById('sov').classList.add('on');
+}
+function hiOv() {
+    document.getElementById('sov').classList.remove('on');
+    if (si) { clearInterval(si); si = null; }
+}
+
+function clrRes() {
+    res = [];
+    document.getElementById('rbody').innerHTML = '<div style="text-align:center;padding:30px;color:var(--t3)"><p style="font-size:1.5rem;margin-bottom:6px">🌍</p><p>Configure and scan to find seeds.</p></div>';
+    document.getElementById('rc').textContent = '0 results';
+    document.getElementById('sts').textContent = '';
+}
+
+function rRes() {
+    document.getElementById('rc').textContent = res.length + ' results';
+    document.getElementById('rbody').innerHTML = res.map(r => {
+        const t = r.structures ? Object.entries(r.structures).map(([n, plist]) => plist.map(p => {
+            let pieces = '';
+            if (p.pieces) {
+                pieces = `<div style="font-size:0.6rem;opacity:0.8;margin-top:2px">${Object.entries(p.pieces).map(([pn, pc]) => `<b>${pn}</b>: ${pc}`).join(', ')}</div>`;
+            }
+            return `<div class="rtg">${n} (${p.x}, ${p.z})${pieces}</div>`;
+        }).join('')).join('') : '';
+        
+        const b = r.biomes ? Object.entries(r.biomes).map(([n, p]) => `<span class="rtg" style="background:rgba(245,158,11,0.15);color:var(--wn)">${n} (${p.x}, ${p.z})${p.type ? ` : ${p.type}` : ''}</span>`).join('') : '';
+        const bMatches = r.bMatches ? `<div style="margin-top:8px;padding:8px;background:rgba(14,165,233,0.1);border-radius:4px;border:1px solid rgba(14,165,233,0.2)"><div style="font-weight:600;font-size:0.7rem;color:#0ea5e9;margin-bottom:4px">🧱 Custom Block Matches:</div><div style="font-size:0.7rem;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px">${r.bMatches.map(m => `<span style="background:rgba(14,165,233,0.15);padding:2px 4px;border-radius:2px">${m}</span>`).join('')}</div></div>` : '';
+        const lootInfo = r.foundLoot ? `<div style="margin-top:8px;padding:8px;background:rgba(139,92,246,0.1);border-radius:4px;border:1px solid rgba(139,92,246,0.2)"><div style="font-weight:600;font-size:0.7rem;color:var(--a2);margin-bottom:4px">🎁 Validated Loot:</div><div style="font-size:0.7rem;color:var(--t2)">${r.foundLoot.map(l => `<b>${l.table}</b> at (${l.x}, ${l.z})`).join('<br>')}</div></div>` : '';
+        const lootBtn = (r.foundLoot || document.querySelectorAll('#lflist .li2').length > 0) ? `<button class="btn bo" style="margin-top:6px;font-size:.7rem" onclick="event.stopPropagation();lfs(${r.seed})">🎁 View Full Loot</button>` : '';
+        
+        return `<div class="rr an" onclick="this.classList.toggle('ex')">
+            <div class="rs">🌱 ${r.seed}</div>
+            <div class="rt">${t}${b}</div>
+            <div class="rd">
+                ${bMatches}
+                ${lootInfo}
+                <pre style="font-size:.7rem;color:var(--t2);margin-top:6px">${JSON.stringify(r, null, 2)}</pre>
+                ${lootBtn}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function qLoot() {
+    const s = document.getElementById('ls').value, v = document.getElementById('lv').value, t = document.getElementById('lt').value;
+    const d2 = document.getElementById('lr');
+    d2.innerHTML = '<div style="text-align:center;padding:16px;color:var(--t3)">Loading...</div>';
+    try {
+        const r = await fetch('/api/seedfinding/loot', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({seed: +s, version: v, lootTable: t})
+        });
+        const d = await r.json();
+        if (d.error) { d2.innerHTML = `<div style="color:var(--er)">${d.error}</div>`; return; }
+        const c = ['#6366f1', '#8b5cf6', '#a855f7', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
+        d2.innerHTML = (d.items || []).map((it, i) => `<div class="lii an" style="animation-delay:${i * 40}ms"><div class="lic" style="background:linear-gradient(135deg,${c[i % 8]},${c[(i + 3) % 8]})">${it.name[0].toUpperCase()}</div><div><div class="lin">${it.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div><div class="lik">×${it.count}</div></div></div>`).join('') || '<div style="text-align:center;padding:16px;color:var(--t3)">No items</div>';
+    } catch (e) {
+        d2.innerHTML = `<div style="color:var(--er)">${e.message}</div>`;
+    }
+}
+function lfs(s) { document.getElementById('ls').value = s; document.querySelectorAll('.tab')[1].click(); qLoot(); }
+</script>
+</body>
+</html>
