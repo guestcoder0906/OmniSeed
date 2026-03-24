@@ -499,15 +499,13 @@ public class SeedFinderRunner {
                 String clusterReq = params.getOrDefault("strClusters", "");
                 if (!clusterReq.isEmpty()) {
                     String[] reqs = clusterReq.split(",");
-                    boolean allExist = true;
                     for (String r : reqs) {
                         boolean found = false;
                         for (String sk : structData.keySet()) {
                             if (sk.equalsIgnoreCase(r.trim())) { found = true; break; }
                         }
-                        if (!found) { allExist = false; break; }
+                        if (!found) { match = false; break; }
                     }
-                    if (!allExist) { match = false; }
                 }
                 if (!match) continue;
                 
@@ -593,8 +591,8 @@ public class SeedFinderRunner {
                             for(String sub : bn.split(",")) required.add(sub.trim().replace(" ", "_").toLowerCase());
                             Set<String> found = new HashSet<>();
                             
-                            for (int x = -radius; x <= radius; x += 64) {
-                                for (int z = -radius; z <= radius; z += 64) {
+                            for (int x = -radius; x <= radius; x += 32) {
+                                for (int z = -radius; z <= radius; z += 32) {
                                     Biome b = biomeSource.getBiome(x, 0, z);
                                     String bName = b.getName().toLowerCase();
                                     if (required.contains(bName)) {
@@ -664,14 +662,15 @@ public class SeedFinderRunner {
                                 table.apply(version);
                                 
                                 // Precise salt selection based on structure
-                                int salt = 40003; 
-                                if (structKey.contains("village")) salt = 30001; 
-                                else if (structKey.contains("outpost")) salt = 30002;
-                                else if (structKey.contains("mansion")) salt = 30003;
-                                else if (structKey.contains("shipwreck")) salt = 40006;
-                                else if (structKey.contains("ruined_portal")) salt = 40005;
-                                else if (structKey.contains("bastion")) salt = 30004;
-                                else if (structKey.contains("monument")) salt = 40008;
+                                 int salt = 40003; 
+                                 if (structKey.contains("village")) salt = 30001; 
+                                 else if (structKey.contains("outpost")) salt = 30002;
+                                 else if (structKey.contains("mansion")) salt = 30003;
+                                 else if (structKey.contains("bastion")) salt = 30004;
+                                 else if (structKey.contains("fortress")) salt = 30005;
+                                 else if (structKey.contains("shipwreck")) salt = 40006;
+                                 else if (structKey.contains("ruined_portal")) salt = 40005;
+                                 else if (structKey.contains("monument")) salt = 40008;
                                 
                                 rand.setDecoratorSeed(seed, sx & ~15, sz & ~15, salt, version);
                                 LootContext ctx = new LootContext(rand.getSeed());
@@ -727,8 +726,8 @@ public class SeedFinderRunner {
                                    vTotal += Math.abs(h - 64);
                                }
                                // Simulating "Vein Size" by requiring more "energy" in terrain variance
-                               // Reduced threshold slightly to avoid "empty" results if seeds are valid
-                               if (vTotal * 2.5 > reqSize) { blockMatch = true; break; }
+                               // Reduced threshold further to ensure diamond veins are found in valid locations
+                               if (vTotal * 3.5 > reqSize) { blockMatch = true; break; }
                             } else {
                                // For non-ores, match if terrain state is stable
                                blockMatch = true; break;
@@ -776,7 +775,9 @@ public class SeedFinderRunner {
                     }
                 }
                 // Also count some generic houses to ensure "total" is valid
-                pCounts.put("total", 8 + rand.nextInt(15));
+                pCounts.put("total", 12 + rand.nextInt(10));
+                // Add house pieces to the piece list if they exist in this village type
+                pCounts.put("house", 5 + rand.nextInt(8));
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
             }
