@@ -1062,6 +1062,15 @@ public class SeedFinderRunner {
             } catch (Throwable e) {
                 System.err.println("WARN: Village piece enum skipped for chunk " + chunkX + "," + chunkZ + ": " + e.getMessage());
             }
+        } else if (type.equals("pillager_outpost")) {
+            // Outpost pieces use a specific random sequence starting with the feature seed
+            rand.setDecoratorSeed(seed, chunkX << 4, chunkZ << 4, 30002, version);
+            String[] features = {"cage", "logs", "tent1", "tent2", "target", "empty", "empty"};
+            for (int i = 0; i < 5; i++) {
+                int r = rand.nextInt(features.length);
+                String f = features[r];
+                if (!f.equals("empty")) pCounts.put(f, pCounts.getOrDefault(f, 0) + 1);
+            }
         } else if (type.equals("shipwreck")) {
             try {
                 ShipwreckGenerator gen = new ShipwreckGenerator(version);
@@ -1078,23 +1087,18 @@ public class SeedFinderRunner {
         LootTable lt = type.getLootTable(version);
         if (lt == null) return "unknown";
         
-        // Fingerprinting: Compare generated items for a fixed seed
-        LootContext ctx = new LootContext(0);
-        List<ItemStack> items = lt.generate(ctx);
-        String fingerStr = "";
-        for (ItemStack is : items) fingerStr += is.getItem().getName() + ":" + is.getCount() + "|";
-        
         // Match against known village loot tables
         if (isSameLoot(lt, MCLootTables.VILLAGE_WEAPONSMITH_CHEST, version)) return "blacksmith";
         if (isSameLoot(lt, MCLootTables.VILLAGE_TEMPLE_CHEST, version)) return "church";
-        if (isSameLoot(lt, MCLootTables.VILLAGE_ARMORER_CHEST, version)) return "armorer";
-        if (isSameLoot(lt, MCLootTables.VILLAGE_BUTCHER_CHEST, version)) return "butcher";
-        if (isSameLoot(lt, MCLootTables.VILLAGE_TANNERY_CHEST, version)) return "tannery";
         if (isSameLoot(lt, MCLootTables.VILLAGE_TOOLSMITH_CHEST, version)) return "toolsmith";
-        if (isSameLoot(lt, MCLootTables.VILLAGE_FLETCHER_CHEST, version)) return "fletcher";
-        if (isSameLoot(lt, MCLootTables.VILLAGE_MASON_CHEST, version)) return "mason";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_ARMORER_CHEST, version)) return "armorer";
         if (isSameLoot(lt, MCLootTables.VILLAGE_FISHER_CHEST, version)) return "fisher";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_TANNERY_CHEST, version)) return "tannery";
         if (isSameLoot(lt, MCLootTables.VILLAGE_CARTOGRAPHER_CHEST, version)) return "cartographer";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_MASON_CHEST, version)) return "mason";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_SHEPHERD_CHEST, version)) return "shepherd";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_BUTCHER_CHEST, version)) return "butcher";
+        if (isSameLoot(lt, MCLootTables.VILLAGE_FLETCHER_CHEST, version)) return "fletcher";
         
         return "unknown";
     }
