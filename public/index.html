@@ -295,7 +295,7 @@ input:focus,select:focus{border-color:var(--a)}
 <button class="btn bd" onclick="doStop()">⏹ Stop</button></div></div>
 
 <script>
-const STR=["Ancient City","Bastion","Buried Treasure","Cave","Desert Pyramid","End City","Fortress","Fossil","Igloo","Jungle Temple","Mansion","Mineshaft","Monument","Ocean Ruin","Outpost","Ravine","Ruined Portal","Shipwreck","Stronghold","Swamp Hut","Village"];
+const STR=["Ancient City","Bastion","Buried Treasure","Cave","Desert Pyramid","End City","Fortress","Fossil","Igloo","Jungle Temple","Lava Pool","Mansion","Mineshaft","Monument","Ocean Ruin","Outpost","Ravine","Ruined Portal","Shipwreck","Stronghold","Swamp Hut","Village"];
 
 const BIO=["Ocean","Plains","Desert","Windswept Hills","Forest","Taiga","Swamp","River","Frozen Ocean","Frozen River","Snowy Plains","Snowy Mountains","Mushroom Fields","Mushroom Fields Shore","Beach","Desert Hills","Windswept Forest","Taiga Hills","Mountain Edge","Jungle","Jungle Hills","Sparse Jungle","Deep Ocean","Stony Shore","Snowy Beach","Birch Forest","Birch Forest Hills","Dark Forest","Snowy Taiga","Snowy Taiga Hills","Old Growth Pine Taiga","Giant Tree Taiga Hills","Wooded Mountains","Savanna","Savanna Plateau","Badlands","Wooded Badlands","Badlands Plateau","Warm Ocean","Lukewarm Ocean","Cold Ocean","Deep Warm Ocean","Deep Lukewarm Ocean","Deep Cold Ocean","Deep Frozen Ocean","Sunflower Plains","Desert Lakes","Windswept Gravelly Hills","Flower Forest","Taiga Mountains","Swamp Hills","Ice Spikes","Modified Jungle","Modified Jungle Edge","Old Growth Birch Forest","Tall Birch Hills","Dark Forest Hills","Snowy Taiga Mountains","Old Growth Spruce Taiga","Giant Spruce Taiga Hills","Gravelly Mountains+","Windswept Savanna","Shattered Savanna Plateau","Eroded Badlands","Modified Wooded Badlands Plateau","Modified Badlands Plateau","Bamboo Jungle","Bamboo Jungle Hills","Dripstone Caves","Lush Caves","Meadow","Grove","Snowy Slopes","Frozen Peaks","Jagged Peaks","Stony Peaks","Deep Dark","Mangrove Swamp","Cherry Grove","Pale Garden","Island","Encircling Terrain","Valley"];
 
@@ -367,6 +367,8 @@ if (s === 'Village') {
 } else if (s === 'Igloo') {
     const hasBasement = document.getElementById('ig_basement').checked;
     extInputs = `<div><label>Basement Only</label><input type="checkbox" class="si_bas" ${hasBasement ? 'checked' : ''}></div>`;
+} else if (s === 'Lava Pool') {
+    extInputs = `<div><label>Pool Type</label><select class="sl_typ"><option value="">Any</option><option value="surface">Surface</option><option value="underground">Underground</option></select></div>`;
 }
 
 d.innerHTML=`<strong>${s}</strong><button class="rm" onclick="this.parentElement.remove()">✕</button>
@@ -442,6 +444,8 @@ async function doScan() {
             if (li.querySelector('.su_sz')?.value) extParams.push('min_size=' + li.querySelector('.su_sz').value);
         } else if (n === 'Igloo') {
             extParams.push('basement=' + (li.querySelector('.si_bas')?.checked ? 'true' : 'false'));
+        } else if (n === 'Lava Pool') {
+            if (li.querySelector('.sl_typ')?.value) extParams.push('type=' + li.querySelector('.sl_typ').value);
         }
         const extParamStr = extParams.length > 0 ? `:${extParams.join(',')}` : '';
         const minCount = li.querySelector('.sc1')?.value || '1';
