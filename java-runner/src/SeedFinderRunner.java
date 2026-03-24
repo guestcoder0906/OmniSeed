@@ -298,18 +298,27 @@ public class SeedFinderRunner {
             }
 
             MCVersion version = VERSION_MAP.getOrDefault(params.getOrDefault("version", "1.18"), MCVersion.v1_18);
-            long startSeed = Long.parseLong(params.getOrDefault("startSeed", "0"));
-            long endSeed = Long.parseLong(params.getOrDefault("endSeed", "1000"));
-            int radius = Integer.parseInt(params.getOrDefault("searchRadius", "2048"));
-            int maxResults = Integer.parseInt(params.getOrDefault("maxResults", "10"));
+            String ss = params.getOrDefault("startSeed", "0");
+            long startSeed = ss.isEmpty() ? 0 : Long.parseLong(ss);
+            String es = params.getOrDefault("endSeed", "1000");
+            long endSeed = es.isEmpty() ? 1000 : Long.parseLong(es);
+            String sr = params.getOrDefault("searchRadius", "2048");
+            int radius = sr.isEmpty() ? 2048 : Integer.parseInt(sr);
+            String mr = params.getOrDefault("maxResults", "10");
+            int maxResults = mr.isEmpty() ? 10 : Integer.parseInt(mr);
             
             List<SConfig> structures = new ArrayList<>();
             for(String s : params.getOrDefault("structures", "").split("\\|")) {
                 if(s.isEmpty()) continue;
                 String[] p = s.split(";", -1);
                 if(p.length >= 4) {
-                    boolean ib = p.length >= 5 && p[4].equals("true");
-                    structures.add(new SConfig(p[0], Integer.parseInt(p[1]), Integer.parseInt(p[2]), Integer.parseInt(p[3]), ib));
+                    try {
+                        int x = p[1].isEmpty() ? 0 : Integer.parseInt(p[1]);
+                        int z = p[2].isEmpty() ? 0 : Integer.parseInt(p[2]);
+                        int c = p[3].isEmpty() ? 1 : Integer.parseInt(p[3]);
+                        boolean ib = p.length >= 5 && p[4].equalsIgnoreCase("true");
+                        structures.add(new SConfig(p[0], x, z, c, ib));
+                    } catch (Exception e) {}
                 }
             }
             
@@ -319,14 +328,24 @@ public class SeedFinderRunner {
             for(String s : params.getOrDefault("lootFilters", "").split("\\|")) {
                 if(s.isEmpty()) continue;
                 String[] p = s.split(";", -1);
-                if(p.length >= 5) lootFilters.add(new LFilter(p[0], p[1], Integer.parseInt(p[2]), p[3], Integer.parseInt(p[4])));
+                if(p.length >= 5) {
+                    try {
+                        int r = p[2].isEmpty() ? 50 : Integer.parseInt(p[2]);
+                        int q = p[4].isEmpty() ? 1 : Integer.parseInt(p[4]);
+                        lootFilters.add(new LFilter(p[0], p[1], r, p[3], q));
+                    } catch (Exception e) {}
+                }
             }
             List<BFilter> blockFilters = new ArrayList<>();
             for(String s : params.getOrDefault("blockFilters", "").split("\\|")) {
                 if(s.isEmpty()) continue;
                 String[] p = s.split(";", -1);
-                if(p.length >= 4) blockFilters.add(new BFilter(p[0], p[1], p[2], Integer.parseInt(p[3])));
-                else if(p.length >= 3) blockFilters.add(new BFilter(p[0], p[1], p[2], 1));
+                if(p.length >= 3) {
+                    try {
+                        int size = (p.length >= 4 && !p[3].isEmpty()) ? Integer.parseInt(p[3]) : 1;
+                        blockFilters.add(new BFilter(p[0], p[1], p[2], size));
+                    } catch (Exception e) {}
+                }
             }
 
             int foundCount = 0; long scanned = 0;
