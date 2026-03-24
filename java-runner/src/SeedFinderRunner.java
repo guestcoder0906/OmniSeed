@@ -458,38 +458,43 @@ public class SeedFinderRunner {
                                     boolean found = false;
                                     String type = "";
                                     float val = 0;
+                                    int px = 0, pz = 0;
 
                                     if (baseName.equals("cave") || baseName.equals("ravine")) {
                                         rand.setCarverSeed(seed, cx, cz, version);
                                         if (rand.nextFloat() < (baseName.equals("cave") ? 0.14f : 0.02f)) {
                                             found = true;
-                                            // Simulate noise-based sizing
+                                            int ox = rand.nextInt(16);
+                                            int oz = rand.nextInt(16);
+                                            val = 0;
                                             for(int i=0; i<4; i++) val += rand.nextFloat() * 25;
                                             if (sc.minSize > 0 && val < sc.minSize) found = false;
+                                            px = (cx << 4) + ox; pz = (cz << 4) + oz;
                                         }
                                     } else if (baseName.equals("lava_pool")) {
                                         // Lava Pools use decorator seeds. Index 8 for underground, 10 for surface (approx)
-                                        // For 1.18+, we use a more general check based on placement salt
                                         if (version.isOlderThan(MCVersion.v1_18)) {
-                                            // Underground (1/10 chance per chunk in 1.16-)
                                             rand.setDecoratorSeed(seed, cx << 4, cz << 4, 8, version);
                                             if (rand.nextInt(10) == 0) {
                                                 found = true; type = "underground";
+                                                px = (cx << 4) + rand.nextInt(16);
+                                                pz = (cz << 4) + rand.nextInt(16);
                                             }
-                                            // Surface (1/13 chance in most biomes)
                                             if (!found) {
                                                 rand.setDecoratorSeed(seed, cx << 4, cz << 4, 10, version);
                                                 if (rand.nextInt(13) == 0) {
                                                     found = true; type = "surface";
+                                                    px = (cx << 4) + rand.nextInt(16);
+                                                    pz = (cz << 4) + rand.nextInt(16);
                                                 }
                                             }
                                         } else {
-                                            // 1.18+ logic: Placement seed for lava pools is usually 10001
                                             rand.setDecoratorSeed(seed, cx << 4, cz << 4, 10001, version);
                                             if (rand.nextInt(10) == 0) {
                                                 found = true;
-                                                // 1.18+ uses noise to determine if it's surface or underground
                                                 type = (rand.nextFloat() < 0.2f) ? "surface" : "underground";
+                                                px = (cx << 4) + rand.nextInt(16);
+                                                pz = (cz << 4) + rand.nextInt(16);
                                             }
                                         }
                                         
@@ -500,7 +505,7 @@ public class SeedFinderRunner {
 
                                     if (found) {
                                         Map<String, Object> inst = new LinkedHashMap<>();
-                                        inst.put("x", cx*16); inst.put("z", cz*16);
+                                        inst.put("x", px); inst.put("z", pz);
                                         if (!type.isEmpty()) inst.put("type", type);
                                         if (val > 0) inst.put("size", val);
                                         instances.add(inst);
@@ -946,35 +951,51 @@ public class SeedFinderRunner {
                                     String cleanDim = bf.dim.replaceAll("[^0-9]", "");
                                     if (!cleanDim.isEmpty()) reqSize = Integer.parseInt(cleanDim);
                                 }
-                            } catch (Exception e) {}
-                            
-                            if (targetBlock.toLowerCase().contains("ore") || targetBlock.toLowerCase().contains("debris") || targetBlock.toLowerCase().contains("diamond")) {
-                               float vTotal = 0;
-                               for(int i=0; i<64; i+=16) {
-                                   float h = terrainGenerator.getHeightOnGround(i, i);
-                                   vTotal += Math.abs(h - 64);
-                               }
-                               if (reqSize == 0 || vTotal * 3.5 > reqSize) { 
+                                
+                                if (targetBlock.toLowerCase().contains("ore") || targetBlock.toLowerCase().contains("diamond") || targetBlock.toLowerCase().contains("debris")) {
+                                    // Real Ore Placement check (1.16- simplified for multi-version)
+                                    int salt = 10001; 
+                                    if (targetBlock.contains("coal")) salt = 2;
+                                    else if (targetBlock.contains("iron")) salt = 3;
+                                    else if (targetBlock.contains("gold")) salt = 4;
+                                    else if (targetBlock.contains("diamond")) salt = 10;
+                                    
+                                    int foundX = 0, foundZ = 0;
+                                    boolean oreFound = false;
+                                    for (int cx = -3; cx <= 3; cx++) {
+                                        for (int cz = -3; cz <= 3; cz++) {
+                                            rand.setDecoratorSeed(seed, cx << 4, cz << 4, salt, version);
+                                            if (rand.nextInt(10) == 0) { // Probability of vein in chunk
+                                                oreFound = true;
+                                                foundX = (cx << 4) + rand.nextInt(16);
+                                                foundZ = (cz << 4) + rand.nextInt(16);
+                                                break;
+                                            }
+                                        }
+                                        if(oreFound) break;
+                                    }
+                                    
+                                    if (oreFound) { 
+                                        blockMatch = true;
+                                        Map<String, Object> m = new LinkedHashMap<>();
+                                        m.put("rule", bf.dim + " " + targetBlock);
+                                        m.put("x", foundX); m.put("z", foundZ); 
+                                        @SuppressWarnings("unchecked")
+                                        List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
+                                        bMatches.add(m);
+                                        break; 
+                                    }
+                                } else {
                                    blockMatch = true; 
-                                   // Record the approximate center of the match
                                    Map<String, Object> m = new LinkedHashMap<>();
                                    m.put("rule", bf.dim + " " + targetBlock);
-                                   m.put("x", 0); m.put("z", 0); 
+                                   m.put("x", 0); m.put("z", 0);
                                    @SuppressWarnings("unchecked")
                                    List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
                                    bMatches.add(m);
-                                   break; 
-                               }
-                            } else {
-                               blockMatch = true; 
-                               Map<String, Object> m = new LinkedHashMap<>();
-                               m.put("rule", bf.dim + " " + targetBlock);
-                               m.put("x", 0); m.put("z", 0);
-                               @SuppressWarnings("unchecked")
-                               List<Object> bMatches = (List<Object>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
-                               bMatches.add(m);
-                               break;
-                            }
+                                   break;
+                                }
+                            } catch (Exception e) {}
                         }
                         if (!blockMatch) { match = false; break; }
 
@@ -1031,23 +1052,6 @@ public class SeedFinderRunner {
                     pCounts.put(f, pCounts.getOrDefault(f, 0) + 1);
                 }
             }
-        } else if (type.equals("mansion")) {
-            // Mansion Room layout is deterministic based on seed and position
-            // We use the deterministic salt for mansion generation
-            rand.setDecoratorSeed(seed, chunkX << 4, chunkZ << 4, 30003, version);
-            pCounts.put("mansion_room", 1);
-            // Secret rooms: Actual Minecraft probabilities
-            if (rand.nextInt(100) < 12) pCounts.put("1x1_as1", 1); // Secret Chest
-            if (rand.nextInt(100) < 8) pCounts.put("1x1_as2", 1); // Spider
-            if (rand.nextInt(100) < 5) pCounts.put("1x1_as3", 1); // Obsidian
-            if (rand.nextInt(100) < 3) pCounts.put("1x1_as4", 1); // Lava
-        } else if (type.equals("bastion")) {
-            rand.setDecoratorSeed(seed, chunkX << 4, chunkZ << 4, 30004, version);
-            String[] starts = {"bridge", "hoglin_stable", "units", "treasure"};
-            // Simplified standard start type identifier
-            String st = starts[rand.nextInt(4)];
-            pCounts.put("start_" + st, 1);
-            pCounts.put("ramparts", 1 + rand.nextInt(3));
         }
         return pCounts;
     }
