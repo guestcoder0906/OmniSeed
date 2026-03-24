@@ -90,7 +90,7 @@ input:focus,select:focus{border-color:var(--a)}
 <div class="logo"><div class="li">OS</div><div><h1>OmniSeed</h1><span>Advanced Minecraft Seed Finder <strong style="color:var(--ok);font-size:1.2rem">v13.4 (FINAL STABLE SYNC)</strong> - Sync: 08:00 UTC</span></div></div>
 <div class="tabs" id="mt">
 <button class="tab act" data-tab="finder">🔍 Seed Finder</button>
-<button class="tab" data-tab="loot">🎁 Loot Explorer</button>
+<button class="tab" data-tab="loot" style="display:none">🎁 Loot Explorer</button>
 </div></div></header>
 
 <main class="mn">
@@ -241,16 +241,7 @@ input:focus,select:focus{border-color:var(--a)}
 </div>
 
 <!-- ===== LOOT EXPLORER ===== -->
-<div class="pg" id="pg-loot">
-<div class="pn"><h3>🎁 Loot Explorer <span style="font-size:.7rem;color:var(--t3);font-weight:400">— Predict exact chest contents from seed (SeedFinding engine)</span></h3>
-<div class="rw">
-<div class="fg"><label>World Seed</label><input type="number" id="ls" value="12345"></div>
-<div class="fg"><label>MC Version</label><select id="lv"><option value="1.18" selected>1.18</option><option value="1.17">1.17</option><option value="1.16">1.16</option><option value="1.15">1.15</option><option value="1.14">1.14</option></select></div>
-<div class="fg"><label>Loot Table</label><select id="lt"><optgroup label="Structures"><option value="chests/desert_pyramid">Desert Pyramid</option><option value="chests/jungle_temple">Jungle Temple</option><option value="chests/buried_treasure">Buried Treasure</option><option value="chests/end_city_treasure">End City</option><option value="chests/igloo_chest">Igloo</option><option value="chests/abandoned_mineshaft">Mineshaft</option><option value="chests/nether_bridge">Nether Fortress</option><option value="chests/pillager_outpost">Outpost</option><option value="chests/simple_dungeon">Dungeon</option></optgroup><optgroup label="Shipwrecks"><option value="chests/shipwreck_map">Map</option><option value="chests/shipwreck_supply">Supply</option><option value="chests/shipwreck_treasure">Treasure</option></optgroup><optgroup label="Stronghold"><option value="chests/stronghold_corridor">Corridor</option><option value="chests/stronghold_crossing">Crossing</option><option value="chests/stronghold_library">Library</option></optgroup><optgroup label="Village"><option value="chests/village/village_weaponsmith">Weaponsmith</option><option value="chests/village/village_toolsmith">Toolsmith</option><option value="chests/village/village_armorer">Armorer</option><option value="chests/village/village_butcher">Butcher</option><option value="chests/village/village_temple">Temple</option><option value="chests/village/village_plains_house">Plains</option></optgroup><optgroup label="Archaeology"><option value="archaeology/desert_well">Desert Well</option><option value="archaeology/trail_ruins_rare">Trail Rare</option><option value="archaeology/ocean_ruin_cold">Ocean Cold</option></optgroup><optgroup label="Fishing"><option value="gameplay/fishing">All</option><option value="gameplay/fishing/treasure">Treasure</option></optgroup></select></div>
-<div class="fg"><label>&nbsp;</label><button class="btn bp" onclick="qLoot()">🔮 Predict Loot</button></div>
-</div>
-<div id="lr" class="lg"></div></div>
-</div>
+<!-- LOOT EXPLORER REMOVED -->
 
 </main>
 
@@ -583,7 +574,7 @@ function rRes() {
         const b = r.biomes ? Object.entries(r.biomes).map(([n, p]) => `<span class="rtg" style="background:rgba(245,158,11,0.15);color:var(--wn)">${n} (${p.x}, ${p.z})${p.type ? ` : ${p.type}` : ''}</span>`).join('') : '';
         const bMatches = r.bMatches ? `<div style="margin-top:8px;padding:8px;background:rgba(14,165,233,0.1);border-radius:4px;border:1px solid rgba(14,165,233,0.2)"><div style="font-weight:600;font-size:0.7rem;color:#0ea5e9;margin-bottom:4px">🧱 Custom Block Matches:</div><div style="font-size:0.7rem;color:var(--t2);display:flex;flex-wrap:wrap;gap:4px">${r.bMatches.map(m => `<span style="background:rgba(14,165,233,0.15);padding:2px 4px;border-radius:2px">${m}</span>`).join('')}</div></div>` : '';
         const lootInfo = r.foundLoot ? `<div style="margin-top:8px;padding:8px;background:rgba(139,92,246,0.1);border-radius:4px;border:1px solid rgba(139,92,246,0.2)"><div style="font-weight:600;font-size:0.7rem;color:var(--a2);margin-bottom:4px">🎁 Validated Loot:</div><div style="font-size:0.7rem;color:var(--t2)">${r.foundLoot.map(l => `<b>${l.table}</b> at (${l.x}, ${l.z})`).join('<br>')}</div></div>` : '';
-        const lootBtn = (r.foundLoot || document.querySelectorAll('#lflist .li2').length > 0) ? `<button class="btn bo" style="margin-top:6px;font-size:.7rem" onclick="event.stopPropagation();lfs(${r.seed})">🎁 View Full Loot</button>` : '';
+        const lootBtn = '';
         
         return `<div class="rr an" onclick="this.classList.toggle('ex')">
             <div class="rs">🌱 ${r.seed}</div>

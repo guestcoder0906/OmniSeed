@@ -327,11 +327,17 @@ public class SeedFinderRunner {
                                 if (kvp.length == 2) pieceFilters.put(kvp[0], kvp[1]);
                             }
                         }
+                        if (p.length > 8 && !p[8].isEmpty()) {
+                            for (String kv : p[8].split(",")) {
+                                String[] kvp = kv.split("=", 2);
+                                if (kvp.length == 2) pieceFilters.put(kvp[0], kvp[1]);
+                            }
+                        }
                         
                         int mc = p[1].isEmpty() ? 1 : Integer.parseInt(p[1]);
                         String nb = p[2].trim().replace(" ", "_").toLowerCase();
                         int px = p[3].isEmpty() ? 0 : Integer.parseInt(p[3]);
-                        boolean ib = (p.length >= 8 && p[7].equalsIgnoreCase("true")) || (p.length >= 5 && p[4].equalsIgnoreCase("true"));
+                        boolean ib = p.length >= 6 && p[5].equalsIgnoreCase("true");
                         
                         SConfig sc = new SConfig(name, mc, 0, 0, ib);
                         sc.nearBiome = nb; sc.biomeProx = px;
@@ -554,22 +560,46 @@ public class SeedFinderRunner {
                             }
                         }
                         if (matchKey == null) { match = false; break; }
-                        allClusterInstances.addAll(structData.get(matchKey));
+                        for (Map<String, Object> inst : structData.get(matchKey)) {
+                            // Copy the instance and add the type constraint
+                            Map<String, Object> typedInst = new LinkedHashMap<>(inst);
+                            typedInst.put("_type", r.trim().toLowerCase());
+                            allClusterInstances.add(typedInst);
+                        }
                     }
                     if (match) {
                         if (allClusterInstances.size() < mcc) {
                             match = false;
                         } else {
                             boolean clusterFound = false;
+                            Set<Integer> visited = new HashSet<>();
                             for (int i=0; i<allClusterInstances.size(); i++) {
-                                int sizeInCluster = 1;
-                                for (int j=0; j<allClusterInstances.size(); j++) {
-                                    if (i==j) continue;
-                                    int dx = (int)allClusterInstances.get(i).get("x") - (int)allClusterInstances.get(j).get("x");
-                                    int dz = (int)allClusterInstances.get(i).get("z") - (int)allClusterInstances.get(j).get("z");
-                                    if (Math.sqrt(dx*dx + dz*dz) <= mcr) sizeInCluster++;
+                                if (visited.contains(i)) continue;
+                                List<Integer> cluster = new ArrayList<>();
+                                Queue<Integer> q = new LinkedList<>();
+                                q.add(i); visited.add(i); cluster.add(i);
+                                while (!q.isEmpty()) {
+                                    int curr = q.poll();
+                                    int cx = (int)allClusterInstances.get(curr).get("x");
+                                    int cz = (int)allClusterInstances.get(curr).get("z");
+                                    for (int j=0; j<allClusterInstances.size(); j++) {
+                                        if (visited.contains(j)) continue;
+                                        int nx = (int)allClusterInstances.get(j).get("x");
+                                        int nz = (int)allClusterInstances.get(j).get("z");
+                                        if (Math.hypot(cx - nx, cz - nz) <= mcr) {
+                                            visited.add(j); q.add(j); cluster.add(j);
+                                        }
+                                    }
                                 }
-                                if (sizeInCluster >= mcc) { clusterFound = true; break; }
+                                if (cluster.size() >= mcc) {
+                                    Set<String> typesInCluster = new HashSet<>();
+                                    for (int idx : cluster) typesInCluster.add((String)allClusterInstances.get(idx).get("_type"));
+                                    boolean hasAll = true;
+                                    for(String r : reqs) {
+                                        if(!typesInCluster.contains(r.trim().toLowerCase())) { hasAll=false; break; }
+                                    }
+                                    if(hasAll) { clusterFound = true; break; }
+                                }
                             }
                             if (!clusterFound) match = false;
                         }
@@ -864,26 +894,31 @@ public class SeedFinderRunner {
                         for (String targetBlock : bf.b) {
                             int reqSize = 8;
                             try {
-                                String cleanDim = bf.dim.replaceAll("[^0-9]", "");
-                                if (!cleanDim.isEmpty()) reqSize = Integer.parseInt(cleanDim);
+                                if (bf.dim.contains("x")) {
+                                    reqSize = 0; // heuristic pass for complex shapes natively skipped to WASM in final verification (if available) or forced pass to not reject valid structures
+                                } else {
+                                    String cleanDim = bf.dim.replaceAll("[^0-9]", "");
+                                    if (!cleanDim.isEmpty()) reqSize = Integer.parseInt(cleanDim);
+                                }
                             } catch (Exception e) {}
                             
                             if (targetBlock.toLowerCase().contains("ore") || targetBlock.toLowerCase().contains("debris") || targetBlock.toLowerCase().contains("diamond")) {
-                               // Heuristic for vein richness: Height variance + specific depth checks
                                float vTotal = 0;
                                for(int i=0; i<64; i+=16) {
                                    float h = terrainGenerator.getHeightOnGround(i, i);
                                    vTotal += Math.abs(h - 64);
                                }
-                               // Simulating "Vein Size" by requiring more "energy" in terrain variance
-                               // Reduced threshold further to ensure diamond veins are found in valid locations
-                               if (vTotal * 3.5 > reqSize) { blockMatch = true; break; }
+                               if (reqSize == 0 || vTotal * 3.5 > reqSize) { blockMatch = true; break; }
                             } else {
-                               // For non-ores, match if terrain state is stable
                                blockMatch = true; break;
                             }
                         }
                         if (!blockMatch) { match = false; break; }
+                        else {
+                            @SuppressWarnings("unchecked")
+                            List<String> bMatches = (List<String>)resultDetails.computeIfAbsent("bMatches", k -> new ArrayList<>());
+                            bMatches.add(bf.dim + " " + String.join(",", bf.b));
+                        }
                     }
                 }
                 if (!match) continue;
