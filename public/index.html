@@ -87,7 +87,7 @@ input:focus,select:focus{border-color:var(--a)}
 </head>
 <body>
 <header class="hdr"><div class="hi">
-<div class="logo"><div class="li">OS</div><div><h1>OmniSeed</h1><span>Advanced Minecraft Seed Finder <strong style="color:var(--ok);font-size:1.2rem">v3.5 (PROD READY)</strong> - Sync: 08:00 UTC</span></div></div>
+<div class="logo"><div class="li">OS</div><div><h1>OmniSeed</h1><span>Advanced Minecraft Seed Finder <strong style="color:var(--ok);font-size:1.2rem">v12.5 (BUG FIX SYNC)</strong> - Sync: 08:35 UTC</span></div></div>
 <div class="tabs" id="mt">
 <button class="tab act" data-tab="finder">🔍 Seed Finder</button>
 <button class="tab" data-tab="loot">🎁 Loot Explorer</button>
@@ -472,11 +472,11 @@ async function doScan() {
 
     const lootFilters = Array.from(document.querySelectorAll('#lflist .bdata')).map(div => 
         `${div.dataset.t};${div.dataset.i};${div.dataset.c};${div.dataset.e||''};${div.dataset.el||0}`
-    );
+    ).join('|');
 
     const blockFilters = Array.from(document.querySelectorAll('#bflist .bdata')).map(div => 
         `${div.dataset.cond};${div.dataset.b};${div.dataset.cnt};${div.dataset.vs}`
-    );
+    ).join('|');
 
     const body = {
         version: document.getElementById('ver').value,
@@ -485,9 +485,9 @@ async function doScan() {
         searchRadius: +(document.getElementById('sdist').value || 1000),
         maxResults: +(document.getElementById('mres').value || 10),
         structures: structs.join('|'),
-        biomes: biomes.join('|'),
-        lootFilters: lootFilters.join('|'),
-        blockFilters: blockFilters.join('|')
+        biomes: biomes,
+        lootFilters: lootFilters,
+        blockFilters: blockFilters
     };
 
     try {
