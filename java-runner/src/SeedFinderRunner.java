@@ -266,7 +266,9 @@ public class SeedFinderRunner {
     static class SConfig {
         String n; int mc, md, so; 
         boolean ib; // Igloo Basement
-        Map<String, Integer> jr = new HashMap<>(); // Jigsaw rules
+        Map<String, Integer> jr = new HashMap<>(); // Jigsaw/Piece requirements (e.g. blacksmith=1)
+        String sr = ""; // Specific Room (Mansion)
+        int minSize = -1; // Min Size for Caves/Ravines
         SConfig(String n, int mc, int md, int so, boolean ib) { 
             this.n=n; this.mc=mc; this.md=md; this.so=so; this.ib=ib;
         }
@@ -313,11 +315,37 @@ public class SeedFinderRunner {
                 String[] p = s.split(";", -1);
                 if(p.length >= 4) {
                     try {
+                        String rawName = p[0];
+                        String name = rawName;
+                        Map<String, String> pieceFilters = new HashMap<>();
+                        if (rawName.contains(":")) {
+                            String[] parts = rawName.split(":", 2);
+                            name = parts[0];
+                            for (String kv : parts[1].split(",")) {
+                                String[] kvp = kv.split("=", 2);
+                                if (kvp.length == 2) pieceFilters.put(kvp[0], kvp[1]);
+                            }
+                        }
+                        
                         int x = p[1].isEmpty() ? 0 : Integer.parseInt(p[1]);
                         int z = p[2].isEmpty() ? 0 : Integer.parseInt(p[2]);
                         int c = p[3].isEmpty() ? 1 : Integer.parseInt(p[3]);
-                        boolean ib = p.length >= 5 && p[4].equalsIgnoreCase("true");
-                        structures.add(new SConfig(p[0], x, z, c, ib));
+                        boolean ib = p.length >= 8 && p[7].equalsIgnoreCase("true"); // Check index carefully
+                        
+                        // Handle legacy and new index positions for Igloo
+                        if (p.length >= 5 && p[4].equalsIgnoreCase("true")) ib = true;
+                        
+                        SConfig sc = new SConfig(name, x, z, c, ib);
+                        for (Map.Entry<String, String> entry : pieceFilters.entrySet()) {
+                            if (entry.getKey().equals("room")) sc.sr = entry.getValue();
+                            else if (entry.getKey().equals("size")) sc.minSize = Integer.parseInt(entry.getValue());
+                            else {
+                                try {
+                                    sc.jr.put(entry.getKey(), Integer.parseInt(entry.getValue()));
+                                } catch (Exception ignored) {}
+                            }
+                        }
+                        structures.add(sc);
                     } catch (Exception e) {}
                 }
             }

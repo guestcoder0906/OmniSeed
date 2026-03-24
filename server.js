@@ -147,24 +147,22 @@ app.post('/api/scan', async (req, res) => {
     const cp = getJavaClasspath();
     if (!cp) return res.status(503).json({ error: 'Java backend not available' });
     
-    const proc = spawn('java', ['-cp', cp, 'SeedFinderRunner', 'scan']);
-    session.process = proc;
-    
-    const lfStr = (lootFilters || []).map(f => `${f.table};${f.item};${f.count};${f.ench};${f.enchLvl}`).join('|');
-    const bfStr = (blockFilters || []).map(f => `${f.cond};${f.block};${f.count}`).join('|');
-    
+    // Create params string for Java process
     const params = [
         `version=${version || '1.18'}`,
         `startSeed=${startSeed || 0}`,
         `endSeed=${endSeed || 1000}`,
         `searchRadius=${searchRadius || 2048}`,
         `maxResults=${maxResults || 10}`,
-        `structures=${(structArr || []).join('|')}`,
-        `biomes=${(biomeArr || []).join('|')}`,
-        `lootFilters=${lfStr}`,
-        `blockFilters=${bfStr}`,
-        '' // empty line
+        `structures=${structures || ""}`,
+        `biomes=${biomes || ""}`,
+        `lootFilters=${lootFilters || ""}`,
+        `blockFilters=${blockFilters || ""}`,
+        '' // final newline
     ].join('\n');
+    
+    const proc = spawn('java', ['-cp', cp, 'SeedFinderRunner', 'scan']);
+    session.process = proc;
     
     proc.stdin.write(params);
     proc.stdin.end();

@@ -180,7 +180,7 @@ input:focus,select:focus{border-color:var(--a)}
 <div class="pn"><h3>🧱 Block-Level Filters <span style="font-size:.65rem;color:var(--a);font-weight:400">— Dynamic custom block structures (Pillars, Shapes, Ores)</span></h3>
 <p style="font-size:.7rem;color:var(--t3);margin-bottom:8px">Test specific chunk coordinates for custom block arrangements, sizes, or ore vein sizes.</p>
 <div class="rw">
-<div class="fg" style="flex:1.5"><label>Dimension Rule <a href="#" onclick="document.getElementById('syntaxModal').style.display='flex'">📖 Syntax Guide</a></label><input type="text" id="bfdim" value="1x10+x1" placeholder="e.g. 1x2-3(center:3-5x1)+1... or [0,0,0]+[3,0,0]"></div>
+<div class="fg" style="flex:1.5"><label>Dimension Rule / Vein Size <a href="#" onclick="document.getElementById('syntaxModal').style.display='flex'">📖 Syntax Guide</a></label><input type="text" id="bfdim" value="8+" placeholder="e.g. 1x10+x1 (Shape) or 8+ (Vein Size)"></div>
 <div class="fg"><label>Match Count</label><select id="bfcnt">
 <option value="all">All Matches</option>
 <option value="1">Exactly 1</option>
@@ -209,18 +209,7 @@ input:focus,select:focus{border-color:var(--a)}
 <option value="deepslate_emerald_ore">Deepslate Emerald Ore</option>
 <option value="deepslate_lapis_ore">Deepslate Lapis Lazuli Ore</option>
 <option value="deepslate_diamond_ore">Deepslate Diamond Ore</option>
-<option value="nether_quartz_ore">Nether Quartz Ore</option>
-<option value="nether_gold_ore">Nether Gold Ore</option>
-<option value="ancient_debris">Ancient Debris</option>
-<option value="obsidian">Obsidian</option>
-<option value="spawner">Spawner</option>
-<option value="sponge">Sponge</option>
-<option value="wet_sponge">Wet Sponge</option>
-<option value="bell">Bell</option>
-<option value="suspicious_sand">Suspicious Sand</option>
-<option value="suspicious_gravel">Suspicious Gravel</option>
 </select></div>
-<div class="fg"><label>Vein Size (Min)</label><input type="range" id="bfvs" min="1" max="100" value="8" style="width:100%"><span id="bfvs_val" style="font-size:0.65rem;color:var(--t3)">8 blocks</span></div>
 <div class="fg" style="max-width:80px;justify-content:flex-end"><button class="btn bo" style="width:100%" onclick="addBF()">Add Filter</button></div>
 </div>
 <div class="lb" id="bflist"></div>
@@ -378,10 +367,12 @@ if (s === 'Village') {
 } else if (s === 'Outpost') {
     extInputs = `<div><label title="Requires the outpost to spawn with at least this many Iron Golem cages">Min Golem Cages</label><input type="number" class="so_cag"></div>`;
 } else if (s === 'Mansion') {
-    extInputs = `<div><label title="Finds a mansion that spawned this exact room layout identifier (e.g. 1x1_as1)">Specific Room</label><input type="text" class="sm_rm" placeholder="Optional identifier"></div>`;
+    extInputs = `<div><label title="Finds a mansion that spawned this exact room layout identifier">Specific Room</label><select class="sm_rm"><option value="">Any Room</option><option value="1x1_as1">Secret Chest (1x1_as1)</option><option value="1x1_as2">Secret Spider (1x1_as2)</option><option value="1x1_as3">Secret Obsidian (1x1_as3)</option><option value="1x1_as4">Secret Lava (1x1_as4)</option><option value="1x2_se1">Secret Room 1 (1x2_se1)</option><option value="1x2_se2">Secret Room 2 (1x2_se2)</option><option value="1x2_se3">Secret Room 3 (1x2_se3)</option><option value="2x2_s1">Secret 2x2 (2x2_s1)</option><option value="1x2_c_stairs">Hidden Stairs</option></select></div>`;
 } else if (s === 'Monument') {
     extInputs = `<div><label title="Requires at least this many sponge rooms in the monument">Min Sponge Rooms</label><input type="number" class="smo_sp"></div>
                  <div><label title="Requires at least this many gold blocks in the core room">Min Gold Rooms</label><input type="number" class="smo_g"></div>`;
+} else if (s === 'Cave' || s === 'Ravine') {
+    extInputs = `<div><label title="Filters for caves/ravines with this minimum block size (simulated noise test)">Min Size</label><input type="number" class="su_sz" value="50"></div>`;
 } else if (s === 'Igloo') {
     const hasBasement = document.getElementById('ig_basement').checked;
     extInputs = `<div><label>Basement Only</label><input type="checkbox" class="si_bas" ${hasBasement ? 'checked' : ''}></div>`;
@@ -456,6 +447,8 @@ async function doScan() {
         } else if (n === 'Monument') {
             if (li.querySelector('.smo_g')?.value) extParams.push('gold=' + li.querySelector('.smo_g').value);
             if (li.querySelector('.smo_sp')?.value) extParams.push('sponge=' + li.querySelector('.smo_sp').value);
+        } else if (n === 'Cave' || n === 'Ravine') {
+            if (li.querySelector('.su_sz')?.value) extParams.push('min_size=' + li.querySelector('.su_sz').value);
         } else if (n === 'Igloo') {
             extParams.push('basement=' + (li.querySelector('.si_bas')?.checked ? 'true' : 'false'));
         }
@@ -475,7 +468,7 @@ async function doScan() {
         const minSize = li.querySelector('input:nth-of-type(1)')?.value || '-1';
         const maxSize = li.querySelector('input:nth-of-type(2)')?.value || '-1';
         return `${name};${minSize};${maxSize}`;
-    });
+    }).join('|');
 
     const lootFilters = Array.from(document.querySelectorAll('#lflist .bdata')).map(div => 
         `${div.dataset.t};${div.dataset.i};${div.dataset.c};${div.dataset.e||''};${div.dataset.el||0}`
