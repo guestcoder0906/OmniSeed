@@ -487,6 +487,8 @@ async function doScan() {
         const maxVal = li.querySelector('input:nth-child(2)')?.value || '-1';
         return `${strong};${minVal};${maxVal}`;
     }).join('|');
+    const mcc = document.getElementById('mcc')?.value || '2';
+    const mcr = document.getElementById('mcr')?.value || '32';
 
     const body = {
         version: document.getElementById('ver').value,
@@ -500,7 +502,9 @@ async function doScan() {
         blockFilters: blockFilters,
         strClusters: strClusters,
         invClusters: invCombos,
-        clustBym: clustBym
+        clustBym: clustBym,
+        mcc: mcc,
+        mcr: mcr
     };
 
     try {

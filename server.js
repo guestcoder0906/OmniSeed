@@ -173,6 +173,8 @@ app.post('/api/scan', async (req, res) => {
         `strClusters=${req.body.strClusters || ""}`,
         `invClusters=${req.body.invClusters || ""}`,
         `clustBym=${req.body.clustBym || ""}`,
+        `mcc=${req.body.mcc || "2"}`,
+        `mcr=${req.body.mcr || "32"}`,
         '' // final newline
     ].join('\n');
     
@@ -203,6 +205,8 @@ app.post('/api/scan', async (req, res) => {
         } else if (msg.startsWith('DONE:')) {
             const p = msg.split(':'); session.scanned = parseInt(p[1])||0; session.found = parseInt(p[2])||0;
             session.done = true;
+        } else if (msg.startsWith('INFO:')) {
+            console.log(msg);
         } else if (msg.startsWith('ERROR:')) {
             if (!session.errors) session.errors = [];
             session.errors.push(msg.substring(6).trim());

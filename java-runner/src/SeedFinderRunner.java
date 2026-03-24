@@ -368,10 +368,50 @@ public class SeedFinderRunner {
                 if(s.isEmpty()) continue;
                 String[] p = s.split(";", -1);
                 if(p.length >= 3) {
+                    int size = 1;
                     try {
-                        int size = (p.length >= 4 && !p[3].isEmpty()) ? Integer.parseInt(p[3]) : 1;
-                        blockFilters.add(new BFilter(p[0], p[1], p[2], size));
+                        if (p.length >= 4 && !p[3].isEmpty() && !p[3].equals("undefined")) size = Integer.parseInt(p[3]);
                     } catch (Exception e) {}
+                    blockFilters.add(new BFilter(p[0], p[1], p[2], size));
+                }
+            }
+
+            // Auto-inject structures needed for clusters or loot filters
+            Set<String> neededStructures = new HashSet<>();
+            for(String s : params.getOrDefault("strClusters", "").split(",")) if(!s.trim().isEmpty()) neededStructures.add(s.trim());
+            for(String s : params.getOrDefault("invClusters", "").split("\\|")) {
+                if(s.trim().isEmpty()) continue;
+                for(String sub : s.split("\\+")) neededStructures.add(sub.trim());
+            }
+            for (LFilter lf : lootFilters) {
+                String k = lf.t.contains("/") ? lf.t.split("/")[1] : lf.t;
+                if (k.startsWith("village_")) k = "village";
+                else if (k.contains("pyramid")) k = k.contains("jungle") ? "jungle_pyramid" : "desert_pyramid";
+                else if (k.contains("outpost")) k = "pillager_outpost";
+                else if (k.contains("shipwreck")) k = "shipwreck";
+                else if (k.contains("stronghold")) k = "stronghold";
+                else if (k.contains("bastion")) k = "bastion";
+                else if (k.contains("fortress") || k.contains("nether_bridge")) k = "fortress";
+                else if (k.contains("mansion")) k = "mansion";
+                else if (k.contains("igloo")) k = "igloo";
+                else if (k.contains("end_city")) k = "end_city";
+                else if (k.contains("ruin")) k = k.contains("ocean") ? "ocean_ruin" : "trail_ruins";
+                neededStructures.add(k);
+            }
+            for (String needed : neededStructures) {
+                boolean f = false;
+                for (SConfig sc : structures) {
+                    String bn = sc.n.toLowerCase().replace(" ", "_");
+                    if (bn.equals("outpost")) bn = "pillager_outpost";
+                    if (bn.equals("jungle_temple")) bn = "jungle_pyramid";
+                    if (sc.n.equalsIgnoreCase(needed) || bn.equalsIgnoreCase(needed) || needed.equalsIgnoreCase(bn) || sc.n.equalsIgnoreCase(needed.replace("_", " "))) { f = true; break; }
+                }
+                if (!f) {
+                    String k = needed.toLowerCase().replace(" ", "_");
+                    if (k.equals("outpost")) k = "pillager_outpost";
+                    if (k.equals("jungle_temple")) k = "jungle_pyramid";
+                    if (STRUCTURE_MAP.containsKey(k)) structures.add(new SConfig(k, 1, 0, 0, false));
+                    else if (STRUCTURE_MAP.containsKey(needed)) structures.add(new SConfig(needed, 1, 0, 0, false));
                 }
             }
 
@@ -497,14 +537,76 @@ public class SeedFinderRunner {
                 
                 // Structure Clusters Check
                 String clusterReq = params.getOrDefault("strClusters", "");
+                int mcc = 2; int mcr = 32;
+                try {
+                    if (!params.getOrDefault("mcc", "").isEmpty()) mcc = Integer.parseInt(params.get("mcc"));
+                    if (!params.getOrDefault("mcr", "").isEmpty()) mcr = Integer.parseInt(params.get("mcr"));
+                } catch(Exception ignored) {}
+                
                 if (!clusterReq.isEmpty()) {
                     String[] reqs = clusterReq.split(",");
+                    List<Map<String, Object>> allClusterInstances = new ArrayList<>();
                     for (String r : reqs) {
-                        boolean found = false;
+                        String matchKey = null;
                         for (String sk : structData.keySet()) {
-                            if (sk.equalsIgnoreCase(r.trim())) { found = true; break; }
+                            if (sk.equalsIgnoreCase(r.trim()) || sk.toLowerCase().replace(" ", "_").equals(r.trim().toLowerCase().replace(" ", "_")) || sk.equalsIgnoreCase(r.trim().replace("_", " "))) {
+                                matchKey = sk; break; 
+                            }
                         }
-                        if (!found) { match = false; break; }
+                        if (matchKey == null) { match = false; break; }
+                        allClusterInstances.addAll(structData.get(matchKey));
+                    }
+                    if (match) {
+                        if (allClusterInstances.size() < mcc) {
+                            match = false;
+                        } else {
+                            boolean clusterFound = false;
+                            for (int i=0; i<allClusterInstances.size(); i++) {
+                                int sizeInCluster = 1;
+                                for (int j=0; j<allClusterInstances.size(); j++) {
+                                    if (i==j) continue;
+                                    int dx = (int)allClusterInstances.get(i).get("x") - (int)allClusterInstances.get(j).get("x");
+                                    int dz = (int)allClusterInstances.get(i).get("z") - (int)allClusterInstances.get(j).get("z");
+                                    if (Math.sqrt(dx*dx + dz*dz) <= mcr) sizeInCluster++;
+                                }
+                                if (sizeInCluster >= mcc) { clusterFound = true; break; }
+                            }
+                            if (!clusterFound) match = false;
+                        }
+                    }
+                }
+                
+                // Invalid Clusters Check
+                if (match && !params.getOrDefault("invClusters", "").isEmpty()) {
+                    for (String c : params.get("invClusters").split("\\|")) {
+                        if (c.isEmpty()) continue;
+                        String[] reqs = c.split("\\+");
+                        List<Map<String, Object>> badClusterInstances = new ArrayList<>();
+                        boolean fullyPopulated = true;
+                        for (String r : reqs) {
+                            String matchKey = null;
+                            for (String sk : structData.keySet()) {
+                                if (sk.equalsIgnoreCase(r.trim()) || sk.toLowerCase().replace(" ", "_").equals(r.trim().toLowerCase().replace(" ", "_"))) {
+                                    matchKey = sk; break; 
+                                }
+                            }
+                            if (matchKey == null) { fullyPopulated = false; break; }
+                            badClusterInstances.addAll(structData.get(matchKey));
+                        }
+                        if (fullyPopulated) {
+                            boolean badClusterFound = false;
+                            for (int i=0; i<badClusterInstances.size(); i++) {
+                                int count = 1;
+                                for (int j=0; j<badClusterInstances.size(); j++) {
+                                    if(i==j) continue;
+                                    int dx = (int)badClusterInstances.get(i).get("x") - (int)badClusterInstances.get(j).get("x");
+                                    int dz = (int)badClusterInstances.get(i).get("z") - (int)badClusterInstances.get(j).get("z");
+                                    if (Math.sqrt(dx*dx + dz*dz) <= mcr) count++;
+                                }
+                                if (count >= reqs.length) { badClusterFound = true; break; }
+                            }
+                            if (badClusterFound) { match = false; break; }
+                        }
                     }
                 }
                 if (!match) continue;
@@ -625,6 +727,54 @@ public class SeedFinderRunner {
                         if (!bf) { match = false; break; }
                     }
                     if (match) resultDetails.put("biomes", biomeData);
+                }
+                if (!match) continue;
+                
+                // Clustered Biomes Processing
+                if (!params.getOrDefault("clustBym", "").isEmpty()) {
+                    String[] reqClustBym = params.get("clustBym").split("\\|");
+                    for(String s : reqClustBym) {
+                        if(s.trim().isEmpty()) continue;
+                        String[] p = s.split(";");
+                        String bCombo = p[0].trim();
+                        int minSize = -1; int maxSize = -1;
+                        try {
+                            minSize = Integer.parseInt(p[1]);
+                            maxSize = Integer.parseInt(p[2]);
+                        } catch(Exception e) {}
+                        
+                        Set<String> required = new HashSet<>();
+                        for(String sub : bCombo.split("\\+")) required.add(sub.trim().replace(" ", "_").toLowerCase());
+                        
+                        boolean cbFound = false;
+                        for (int x = -radius; x <= radius; x += 32) {
+                            for (int z = -radius; z <= radius; z += 32) {
+                                Set<String> found = new HashSet<>();
+                                // check completely within a 64x64 area for all biomes
+                                for (int ox = -32; ox <= 32; ox += 16) {
+                                    for (int oz = -32; oz <= 32; oz += 16) {
+                                        Biome b = biomeSource.getBiome(x+ox, 0, z+oz);
+                                        String bn = b.getName().toLowerCase();
+                                        for (String req : required) {
+                                            if (bn.contains(req) || bn.replace("_", " ").equalsIgnoreCase(req)) found.add(req);
+                                        }
+                                    }
+                                }
+                                if (found.size() >= required.size()) {
+                                    cbFound = true;
+                                    @SuppressWarnings("unchecked")
+                                    Map<String, Map<String, Object>> biomeData = (Map<String, Map<String, Object>>)resultDetails.getOrDefault("biomes", new LinkedHashMap<>());
+                                    Map<String, Object> bDet = new LinkedHashMap<>();
+                                    bDet.put("x", x); bDet.put("z", z); bDet.put("type", bCombo); bDet.put("feature", "Clustered Biomes");
+                                    biomeData.put(bCombo, bDet);
+                                    resultDetails.put("biomes", biomeData);
+                                    break;
+                                }
+                            }
+                            if (cbFound) break;
+                        }
+                        if (!cbFound) { match = false; break; }
+                    }
                 }
                 if (!match) continue;
 
