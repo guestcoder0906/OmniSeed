@@ -17,7 +17,7 @@ The ultimate high-performance platform for Minecraft seed finding, integrating *
 *   **Structure Piece Generator**: Enforce constraints on internal structure layouts (e.g. Min 2 Blacksmiths, Specific Mansion Rooms, Igloo Basements).
 *   **Loot Prediction**: Predict exact chest contents and archaeology loot across all major versions.
 *   **Multi-Engine Routing**: Automatically chooses the fastest algorithm (C# logic vs Java deep scan) based on your parameters.
-*   **v3.1 Stable**: Resolved Village NPEs, added Igloo basement toggle, expanded Ore scan (multi-block + size), and detailed jigsaw piece enumeration.
+*   **v3.4 Stable (v13.4 Java)**: Improved Village Jigsaw accuracy, added **Structure Clusters**, **Clustered Biomes**, and improved **Strict Loot Filtering** with precise enchantment matching.
 
 ### 🛠 Deployment
 This Space runs via a custom **Docker** container (OpenJDK 21 + Node.js 20). 
