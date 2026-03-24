@@ -1,5 +1,5 @@
 # Stage 1: Build Java Runner
-FROM openjdk:21-slim AS java-builder
+FROM openjdk:21 AS java-builder
 WORKDIR /app
 COPY . .
 WORKDIR /app/java-runner
@@ -20,8 +20,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 
-# Build Cache Bust (Hotfix v6.0)
-ENV BUILD_ID=20260324-0811
+# Build Cache Bust (Hotfix v7.0)
+ENV BUILD_ID=20260324-0815
 
 # Copy all project files
 COPY . .
