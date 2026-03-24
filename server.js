@@ -19,11 +19,15 @@ const sessions = new Map();
 
 function getJavaClasspath() {
     try {
-        return require('fs').readFileSync(
-            path.join(__dirname, 'java-runner/build/classpath.txt'), 'utf8'
-        ).trim() + ':' + path.join(__dirname, 'java-runner/build');
+        const libsDir = path.join(__dirname, 'java-runner/libs');
+        const buildDir = path.join(__dirname, 'java-runner/build');
+        const fs = require('fs');
+        if (!fs.existsSync(libsDir) || !fs.existsSync(buildDir)) return '';
+        
+        const jars = fs.readdirSync(libsDir).filter(f => f.endsWith('.jar')).map(f => path.join(libsDir, f));
+        return [...jars, buildDir].join(':');
     } catch(e) {
-        console.error("Classpath Error:", e);
+        console.error("Classpath Resolution Error:", e);
         return '';
     }
 }
@@ -61,9 +65,12 @@ app.get('/api/seedfinding/info', (req, res) => {
     let output = '';
     proc.stdout.on('data', d => output += d);
     proc.stderr.on('data', d => {}); // ignore warnings
+    proc.on('error', e => {
+        if (!res.headersSent) res.status(500).json({ error: 'Failed to start Java process: ' + e.message });
+    });
     proc.on('close', code => {
-        try { res.json(JSON.parse(output)); }
-        catch(e) { res.status(500).json({ error: 'Failed to get info' }); }
+        try { if (!res.headersSent) res.json(JSON.parse(output)); }
+        catch(e) { if (!res.headersSent) res.status(500).json({ error: 'Failed to parse Java info output' }); }
     });
 });
 
@@ -78,10 +85,12 @@ app.post('/api/seedfinding/loot', (req, res) => {
     
     let output = '';
     proc.stdout.on('data', d => output += d);
-    proc.stderr.on('data', d => {});
+    proc.on('error', e => {
+        if (!res.headersSent) res.status(500).json({ error: 'Loot spawn failed: ' + e.message });
+    });
     proc.on('close', code => {
-        try { res.json(JSON.parse(output)); }
-        catch(e) { res.status(500).json({ error: 'Loot query failed', raw: output }); }
+        try { if (!res.headersSent) res.json(JSON.parse(output)); }
+        catch(e) { if (!res.headersSent) res.status(500).json({ error: 'Loot query failed', raw: output }); }
     });
 });
 
@@ -96,9 +105,12 @@ app.get('/api/seedfinding/items', (req, res) => {
     const proc = spawn('java', ['-cp', cp, 'SeedFinderRunner', 'items', String(table)]);
     let output = '';
     proc.stdout.on('data', d => output += d);
+    proc.on('error', e => {
+        if (!res.headersSent) res.status(500).json({ error: 'Items spawn failed: ' + e.message });
+    });
     proc.on('close', code => {
-        try { res.json(JSON.parse(output)); }
-        catch(e) { res.status(500).json({ error: 'Items query failed' }); }
+        try { if (!res.headersSent) res.json(JSON.parse(output)); }
+        catch(e) { if (!res.headersSent) res.status(500).json({ error: 'Items query failed' }); }
     });
 });
 
@@ -167,6 +179,12 @@ app.post('/api/scan', async (req, res) => {
     const proc = spawn('java', ['-cp', cp, 'SeedFinderRunner', 'scan']);
     session.process = proc;
     
+    proc.on('error', e => {
+        if (!session.errors) session.errors = [];
+        session.errors.push('Java Scan Process Error: ' + e.message);
+        session.done = true;
+    });
+
     proc.stdin.write(params);
     proc.stdin.end();
     
@@ -191,6 +209,10 @@ app.post('/api/scan', async (req, res) => {
             session.done = true;
         } else if (msg.startsWith('WARN:')) {
             console.warn(msg);
+        } else {
+            // General stderr logs (like JVM crashes or OOMs)
+            if (!session.errors) session.errors = [];
+            session.errors.push(msg);
         }
     });
 
